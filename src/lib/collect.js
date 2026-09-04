@@ -28,9 +28,13 @@ export function collectNodes() {
       fg: parseColor(cs.color),
       bgImage: cs.backgroundImage,
       boxShadow: cs.boxShadow,
+      // border-radius can be a percentage; resolve it against the box or a
+      // circle reads as a 50px radius instead of half its width
       radii: [cs.borderTopLeftRadius, cs.borderTopRightRadius,
               cs.borderBottomRightRadius, cs.borderBottomLeftRadius]
-             .map(v => Math.round(parseFloat(v) || 0)),
+             .map(v => String(v).includes('%')
+               ? Math.round((parseFloat(v) || 0) / 100 * Math.min(rect.width, rect.height))
+               : Math.round(parseFloat(v) || 0)),
       borders: [cs.borderTopWidth, cs.borderRightWidth,
                 cs.borderBottomWidth, cs.borderLeftWidth].map(v => parseFloat(v) || 0),
       padding: [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft]
@@ -41,6 +45,10 @@ export function collectNodes() {
       backdrop: cs.backdropFilter || cs.webkitBackdropFilter || 'none',
       bgClip: cs.backgroundClip || cs.webkitBackgroundClip || '',
       textAlign: cs.textAlign,
+      textTransform: cs.textTransform,
+      letterSpacing: parseFloat(cs.letterSpacing) || 0,
+      filter: cs.filter || 'none',
+      easing: cs.transitionTimingFunction || '',
       text: directText(el),
     };
     node.maxRadius = Math.max(...node.radii);

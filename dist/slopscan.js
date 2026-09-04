@@ -1,4 +1,4 @@
-/* slopscan — deterministic AI-slop UI detector. 17 modules, built 2026-09-04. */
+/* slopscan — deterministic AI-slop UI detector. 18 modules, built 2026-09-04. */
 (() => {
 'use strict';
 
@@ -33,6 +33,15 @@ function hsl(c) {
   }
   const l = (mx + mn) / 2;
   return { h, s: d ? d / (1 - Math.abs(2 * l - 1)) : 0, l };
+}
+
+function relativeLuminance(c) {
+  const ch = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+}
+function contrastRatio(a, b) {
+  const l1 = relativeLuminance(a), l2 = relativeLuminance(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
 const rgbKey = c => `${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)}`;
@@ -497,11 +506,115 @@ const iconRules = [
   },
 ];
 
+// ---- src/rules/effects.js --------------------------------------
+const effectRules = [
+  {
+    id: 'blur-orb',
+    label: 'blurred gradient orb',
+    severity: P0, weight: 9,
+    why: 'The big soft colour blob floating behind the hero. Decoration with no content.',
+    test(n) {
+      const { width: w, height: h } = n.rect;
+      if (w < 120 || h < 120) return null;
+      if (n.maxRadius < Math.min(w, h) * 0.4) return null;        // must read as a circle
+      const m = /blur\((\d+(?:\.\d+)?)px\)/.exec(n.filter);
+      if (!m || parseFloat(m[1]) < 14) return null;
+      const tinted = /gradient\(/.test(n.bgImage) || (n.bg && n.bg.a > 0.1 && hsl(n.bg).s > 0.2);
+      return tinted ? `${Math.round(w)}px orb, blur ${m[1]}px` : null;
+    },
+  },
+  {
+    id: 'perma-dark',
+    label: 'dark mode with muted text',
+    severity: P1, weight: 7,
+    why: 'Unrequested dark mode where the body text never reaches full contrast.',
+    test(n, page) {
+      if (!page.isDark) return null;
+      if (n.tag !== 'P' && !/^H[1-3]$/.test(n.tag)) return null;
+      if (n.text.length < 20 || !n.fg || n.fg.a < 0.3) return null;
+      const cr = contrastRatio(n.fg, page.pageBg);
+      return cr < 7 ? `contrast ${cr.toFixed(1)}:1 on a dark ground` : null;
+    },
+  },
+  {
+    id: 'springy-easing',
+    label: 'springy overshoot easing',
+    severity: P1, weight: 5,
+    why: 'A bouncing cubic-bezier on ordinary UI transitions: motion as personality.',
+    test(n) {
+      const m = /cubic-bezier\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/.exec(n.easing);
+      if (!m) return null;
+      const y1 = parseFloat(m[2]), y2 = parseFloat(m[4]);
+      // y outside [0,1] means the value overshoots and springs back
+      return (y1 > 1.05 || y2 > 1.05 || y1 < -0.05 || y2 < -0.05)
+        ? `cubic-bezier overshoot (${y1}, ${y2})` : null;
+    },
+  },
+  {
+    id: 'hairline-everywhere',
+    label: '1px grey border on every card',
+    severity: P2, weight: 6,
+    why: 'The same neutral hairline on every surface: boxing applied by default.',
+    test(n, page) {
+      if (page.hairline.share < 0.55 || page.hairline.count < 6) return null;
+      const even = n.borders.every(b => b > 0 && b <= 1.5);
+      if (!even || !n.bg || n.rect.width < 60 || n.rect.height < 24) return null;
+      return `hairline on ${Math.round(page.hairline.share * 100)}% of ${page.hairline.surfaces} surfaces`;
+    },
+  },
+  {
+    id: 'nested-cards',
+    label: 'card inside a card',
+    severity: P2, weight: 5,
+    why: 'A surface inside a surface, both elevated. One region should own one surface.',
+    test(n, page) {
+      const isCard = x => x.bg && x.bg.a > 0.2 && x.maxRadius >= 8 && x.boxShadow !== 'none';
+      if (!isCard(n)) return null;
+      const parent = n.el.parentElement && page.byEl.get(n.el.parentElement);
+      return parent && isCard(parent) ? 'elevated surface inside an elevated surface' : null;
+    },
+  },
+  {
+    id: 'numbered-steps',
+    label: '01 / 02 / 03 step markers',
+    severity: P1, weight: 6,
+    why: 'Numbering a sequence that is not actually sequential.',
+    test(n, page) {
+      if (page.steps < 3) return null;
+      return (/^0?[1-9]$|^0[1-9]$/.test(n.text) && n.fontSize >= 16)
+        ? `${page.steps} numbered markers on the page` : null;
+    },
+  },
+  {
+    id: 'stat-banner',
+    label: 'stat banner',
+    severity: P1, weight: 6,
+    why: 'A row of big round numbers, usually invented, standing in for evidence.',
+    test(n, page) {
+      if (page.statNums < 3) return null;
+      const big = n.fontSize >= 28 && /^[\d.,]+\s*[KMB%+x]{0,2}$/.test(n.text) && n.text.length <= 8;
+      return big ? `${page.statNums} oversized metrics on the page` : null;
+    },
+  },
+  {
+    id: 'allcaps-label',
+    label: 'all-caps tracked label',
+    severity: P2, weight: 4,
+    why: 'Uppercase plus letter-spacing on every section label, as a substitute for hierarchy.',
+    test(n, page) {
+      if (page.allcaps < 3) return null;
+      const hit = n.textTransform === 'uppercase' && n.letterSpacing >= n.fontSize * 0.05
+        && n.fontSize <= 15 && n.text.length >= 3 && n.text.length <= 34;
+      return hit ? `${page.allcaps} tracked all-caps labels` : null;
+    },
+  },
+];
+
 // ---- src/rules/index.js ----------------------------------------
 // Weights are a first guess, not a fitted model. They need a labelled corpus
 // before the total means anything; read the per-rule list, not the number.
 const RULES = [
-  ...colorRules, ...surfaceRules, ...typeRules, ...layoutRules, ...iconRules,
+  ...colorRules, ...surfaceRules, ...typeRules, ...layoutRules, ...iconRules, ...effectRules,
 ];
 
 // ---- src/lib/collect.js ----------------------------------------
@@ -532,9 +645,13 @@ function collectNodes() {
       fg: parseColor(cs.color),
       bgImage: cs.backgroundImage,
       boxShadow: cs.boxShadow,
+      // border-radius can be a percentage; resolve it against the box or a
+      // circle reads as a 50px radius instead of half its width
       radii: [cs.borderTopLeftRadius, cs.borderTopRightRadius,
               cs.borderBottomRightRadius, cs.borderBottomLeftRadius]
-             .map(v => Math.round(parseFloat(v) || 0)),
+             .map(v => String(v).includes('%')
+               ? Math.round((parseFloat(v) || 0) / 100 * Math.min(rect.width, rect.height))
+               : Math.round(parseFloat(v) || 0)),
       borders: [cs.borderTopWidth, cs.borderRightWidth,
                 cs.borderBottomWidth, cs.borderLeftWidth].map(v => parseFloat(v) || 0),
       padding: [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft]
@@ -545,6 +662,10 @@ function collectNodes() {
       backdrop: cs.backdropFilter || cs.webkitBackdropFilter || 'none',
       bgClip: cs.backgroundClip || cs.webkitBackgroundClip || '',
       textAlign: cs.textAlign,
+      textTransform: cs.textTransform,
+      letterSpacing: parseFloat(cs.letterSpacing) || 0,
+      filter: cs.filter || 'none',
+      easing: cs.transitionTimingFunction || '',
       text: directText(el),
     };
     node.maxRadius = Math.max(...node.radii);
@@ -569,7 +690,8 @@ function buildPageStats(nodes, byEl) {
   let totalChars = 0;
 
   for (const n of nodes) {
-    if (n.maxRadius > 0 && n.maxRadius < 900) radii[n.maxRadius] = (radii[n.maxRadius] || 0) + 1;
+    const circleish = n.maxRadius >= Math.min(n.rect.width, n.rect.height) * 0.4;
+    if (n.maxRadius > 0 && n.maxRadius < 900 && !circleish) radii[n.maxRadius] = (radii[n.maxRadius] || 0) + 1;
     for (const v of [n.gap, n.padding[0], n.padding[3]]) if (v > 0) spacing[v] = (spacing[v] || 0) + 1;
     if (n.text.length > 2 && n.fontSize >= 9) sizes[n.fontSize] = (sizes[n.fontSize] || 0) + n.text.length;
     if (n.text.length && n.font) {
@@ -585,6 +707,26 @@ function buildPageStats(nodes, byEl) {
       if (c && c.a > 0.2) { const H = hsl(c); if (H.s > 0.15) hues.add(Math.round(H.h / 30)); }
     }
   }
+
+  // page-level counters for the rules that only mean something in aggregate
+  let hairlines = 0, surfaces = 0, steps = 0, statNums = 0, allcaps = 0;
+  for (const n of nodes) {
+    const hasSurface = (n.bg && n.bg.a > 0.05) || n.borders.some(b => b > 0);
+    if (hasSurface && n.rect.width > 60 && n.rect.height > 24) {
+      surfaces++;
+      const even = n.borders.every(b => b > 0 && b <= 1.5);
+      if (even && n.bg) hairlines++;
+    }
+    if (/^0?[1-9]$|^0[1-9]$/.test(n.text) && n.fontSize >= 16) steps++;
+    if (n.fontSize >= 28 && /^[\d.,]+\s*[KMB%+x]{0,2}$/.test(n.text) && n.text.length <= 8) statNums++;
+    if (n.textTransform === 'uppercase' && n.letterSpacing >= n.fontSize * 0.05
+        && n.fontSize <= 15 && n.text.length >= 3 && n.text.length <= 34) allcaps++;
+  }
+  // collect() walks body's descendants, so body itself is never in `nodes`
+  let pageBg = document.body ? parseColor(getComputedStyle(document.body).backgroundColor) : null;
+  if (!pageBg || pageBg.a < 0.5) pageBg = parseColor(getComputedStyle(document.documentElement).backgroundColor);
+  if (!pageBg || pageBg.a < 0.5) pageBg = { r: 255, g: 255, b: 255, a: 1 };
+  const isDark = relativeLuminance(pageBg) < 0.2;
 
   const sizeList = Object.keys(sizes).map(Number).sort((a, b) => a - b);
   const topFonts = Object.entries(bodyChars).sort((a, b) => b[1] - a[1]).slice(0, 4)
@@ -611,6 +753,8 @@ function buildPageStats(nodes, byEl) {
     hueCount: hues.size,
     fonts: { top: topFonts, body, display, pairing, mono: topFonts.find(f => f.grp === 'mono' && f.pct >= 25) || null },
     iconSets,
+    hairline: { count: hairlines, share: surfaces ? hairlines / surfaces : 0, surfaces },
+    steps, statNums, allcaps, isDark, pageBg,
   };
 }
 

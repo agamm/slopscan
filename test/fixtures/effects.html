@@ -1,0 +1,44 @@
+<!doctype html><meta charset=utf-8><title>Effects Cases</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0b12;color:#e8e8ef;font-family:system-ui,sans-serif;padding:40px}
+/* blur-orb */
+.orb{position:absolute;top:20px;left:200px;width:340px;height:340px;border-radius:50%;
+  background:radial-gradient(circle,rgb(139,92,246),rgb(59,130,246));filter:blur(70px);opacity:.5}
+/* perma-dark: muted body text on a dark ground */
+p{color:#6b6b7e;max-width:60ch;position:relative}
+h2{color:#8a8a9c;position:relative}
+/* springy-easing */
+.btn{transition:transform .3s cubic-bezier(.34,1.56,.64,1);background:#1e1e2a;color:#fff;
+  border:0;padding:10px 18px;border-radius:8px}
+/* hairline-everywhere: 1px neutral border on every surface */
+.card{background:#14141c;border:1px solid #2a2a36;border-radius:12px;padding:18px;margin:14px 0;
+  box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);position:relative}
+/* nested-cards */
+.inner{background:#1b1b26;border:1px solid #2a2a36;border-radius:10px;padding:12px;
+  box-shadow:0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px -1px rgba(0,0,0,.1);margin-top:12px}
+/* allcaps-label */
+.kicker{text-transform:uppercase;letter-spacing:.14em;font-size:12px;color:#7c7c8e}
+/* numbered-steps */
+.step{font-size:26px;color:#8b5cf6;font-weight:700}
+/* stat-banner */
+.stats{display:flex;gap:40px;margin:26px 0}
+.stat{font-size:38px;font-weight:700}
+</style>
+<div class=orb></div>
+<div class=kicker>How it works</div>
+<h2>Built for teams</h2>
+<p>Body copy sitting at deliberately low contrast against a dark ground, which is the pattern these sources call the most common tell of all.</p>
+<div class=stats>
+  <div><div class=stat>10K+</div><div class=kicker>Users</div></div>
+  <div><div class=stat>99.9%</div><div class=kicker>Uptime</div></div>
+  <div><div class=stat>4.8</div><div class=kicker>Rating</div></div>
+</div>
+<div class=card><div class=step>01</div><h2>Connect</h2><p>Some copy that is long enough to be measured for contrast on this dark background.</p>
+  <div class=inner>A nested elevated surface inside the card above it.</div></div>
+<div class=card><div class=step>02</div><h2>Configure</h2><p>Another paragraph of muted body copy on the same dark ground for the contrast rule.</p></div>
+<div class=card><div class=step>03</div><h2>Ship</h2><p>A third paragraph so the muted-text rule has several elements to mark up here.</p></div>
+<div class=card><h2>Extra</h2><p>More bordered surfaces so the hairline share has a real sample size behind it.</p></div>
+<div class=card><h2>More</h2><p>Another bordered surface for the same reason as the one directly above it.</p></div>
+<div class=card><h2>Again</h2><p>And a sixth bordered surface to clear the minimum count the rule requires.</p></div>
+<button class=btn>Get started</button>
