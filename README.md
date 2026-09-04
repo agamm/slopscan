@@ -143,3 +143,7 @@ outside template literals. It never touches anything that could be a regex liter
   A page can pass every rule and still be bad.
 - **Absolute positioning.** Boxes are placed in document coordinates, so `position: fixed`
   elements drift when you scroll. Re-run to re-place them.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
