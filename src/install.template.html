@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>slopscan — install</title>
+<style>
+:root{color-scheme:light dark;--ink:#14141a;--dim:#6b6b78;--line:#e4e4ec;--bg:#fbfbfd;--card:#fff}
+@media (prefers-color-scheme:dark){:root{--ink:#e8e8ef;--dim:#8b8b9b;--line:#26262f;--bg:#0b0b0f;--card:#131319}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);padding:56px 24px;
+  font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+main{max-width:620px;margin:0 auto}
+h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
+p{color:var(--dim);margin:0 0 20px;max-width:56ch}
+.drag{display:flex;align-items:center;gap:16px;border:1px dashed var(--line);border-radius:10px;
+  padding:20px;background:var(--card);margin:26px 0}
+a.bm{display:inline-block;background:var(--ink);color:var(--bg);text-decoration:none;
+  padding:9px 18px;border-radius:7px;font-weight:600;cursor:grab;white-space:nowrap}
+a.bm:active{cursor:grabbing}
+.hint{font-size:13px;color:var(--dim)}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);
+  margin:34px 0 10px;font-weight:600}
+ol{color:var(--dim);padding-left:20px}li{margin:5px 0}
+code{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px}
+.k{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:7px 0;font-size:13px}
+.k b{font-weight:600}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+</style></head><body><main>
+<h1>slopscan</h1>
+<p>Finds AI-slop UI patterns on any page and marks them in place. __RULES__ deterministic rules over computed CSS. No network, no tracking, nothing leaves the page.</p>
+
+<div class="drag">
+  <a class="bm" href="__BOOKMARKLET__">slopscan</a>
+  <span class="hint">&#8592; drag this to your bookmarks bar</span>
+</div>
+
+<h2>Install</h2>
+<ol>
+  <li>Show the bookmarks bar (<code>Cmd/Ctrl</code> + <code>Shift</code> + <code>B</code>).</li>
+  <li>Drag the black <b>slopscan</b> button onto it.</li>
+  <li>Open any site and click the bookmark.</li>
+</ol>
+
+<h2>Reading it</h2>
+<div class="k"><span>Red outline</span><b>P0 — screams AI on sight</b></div>
+<div class="k"><span>Amber outline</span><b>P1 — the obvious smell</b></div>
+<div class="k"><span>Blue outline</span><b>P2 — cosmetic</b></div>
+<div class="k"><span>Click a HUD row</span><b>isolate that rule</b></div>
+<div class="k"><span>Click a label</span><b>log the element, scroll to it</b></div>
+<div class="k"><span>Escape</span><b>remove the overlay</b></div>
+
+<h2>If the bookmarklet does nothing</h2>
+<p>Some sites block <code>javascript:</code> bookmarks via Content Security Policy. Paste
+<code>dist/slopscan.js</code> into the devtools console instead. In Chrome you may need to
+type <code>allow pasting</code> once first.</p>
+
+<footer>
+The score is a weighted sum of first-guess weights, not a fitted model. Read the rule list, not
+the number. Distribution signals (radius, spacing, type scale) discriminate well; single-face and
+single-feature checks are advisory. Bookmarklet is __SIZE__ KB.
+</footer>
+</main></body></html>

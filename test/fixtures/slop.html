@@ -1,0 +1,31 @@
+<!doctype html><meta charset=utf-8><title>Slop Fixture</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#fafafa;color:#18181b}
+.hero{text-align:center;padding:96px 24px;background:linear-gradient(135deg,rgb(99,102,241),rgb(139,92,246))}
+.pill{display:inline-block;padding:6px 14px;border-radius:9999px;background:rgba(255,255,255,.18);color:#fff;font-size:13px;border:1px solid rgba(255,255,255,.3)}
+h1{font-family:Inter,sans-serif;font-size:56px;margin:16px 0;background:linear-gradient(90deg,rgb(168,85,247),rgb(99,102,241));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:Inter,sans-serif;font-size:30px}
+p{font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:16px;max-width:1100px;margin:auto}
+.card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1)}
+.tile{width:48px;height:48px;border-radius:12px;background:rgba(99,102,241,.14);display:grid;place-items:center;margin-bottom:16px}
+.tile svg{width:22px;height:22px;stroke:rgb(99,102,241);fill:none;stroke-width:2}
+.inner{border-radius:16px;background:#f4f4f5;padding:16px;margin-top:16px}
+.glass{margin:16px;padding:16px;border-radius:16px;background:rgba(255,255,255,.55);backdrop-filter:blur(12px);box-shadow:0 0 40px 6px rgba(139,92,246,.45)}
+.btn{background:rgb(99,102,241);color:#fff;border:0;border-radius:16px;padding:16px 16px;font-size:16px}
+nav a{margin:16px;color:rgb(99,102,241);text-decoration:none}
+</style>
+<nav><a href=#>🚀 Product</a><a href=#>✨ Pricing</a><a href=#>💡 Docs</a></nav>
+<div class=hero>
+  <span class=pill>✨ Now with AI</span>
+  <h1>Elevate your workflow</h1>
+  <p style="color:#fff">Ship faster with the platform built for modern teams.</p>
+  <button class=btn>Get started</button>
+</div>
+<div class=grid>
+  <div class=card><div class=tile><svg viewBox="0 0 24 24"><path d="M4 12h16"/></svg></div><h2>Fast</h2><p>Really fast.</p><div class=inner>Nested</div></div>
+  <div class=card><div class=tile><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/></svg></div><h2>Secure</h2><p>Very secure.</p><div class=inner>Nested</div></div>
+  <div class=card><div class=tile><svg viewBox="0 0 24 24"><circle cx=12 cy=12 r=8/></svg></div><h2>Simple</h2><p>So simple.</p><div class=inner>Nested</div></div>
+</div>
+<div class=glass><h2>Trusted by teams</h2><p>10,000+ developers</p></div>

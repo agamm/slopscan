@@ -1,0 +1,30 @@
+<!doctype html><meta charset=utf-8><title>Clean Fixture</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;background:#fbfaf7;color:#1a1a17;line-height:1.55}
+header{border-bottom:1px solid #ddd9d0;padding:18px 40px}
+nav a{margin-right:22px;color:#1a1a17;font-size:14px;text-decoration:none;border-bottom:1px solid #c9c4b8}
+main{max-width:660px;margin:0;padding:56px 40px}
+h1{font-size:47px;line-height:1.06;margin:0 0 18px;font-weight:500;letter-spacing:-.015em}
+h2{font-size:21px;margin:44px 0 9px;font-weight:600}
+p{font-size:17px;margin:0 0 13px;max-width:58ch}
+.note{border-left:2px solid #8a6d3b;padding:2px 0 2px 15px;margin:26px 0;color:#4a463d;font-size:15px}
+table{border-collapse:collapse;margin:22px 0;font-size:15px}
+td,th{border-bottom:1px solid #e2ded4;padding:7px 26px 7px 0;text-align:left}
+input{border:1px solid #b9b3a5;border-radius:2px;padding:6px 9px;font:inherit;font-size:15px;background:#fff}
+button{background:#1a1a17;color:#fbfaf7;border:0;border-radius:2px;padding:7px 17px;font:inherit;font-size:15px}
+footer{border-top:1px solid #ddd9d0;padding:26px 40px;font-size:13px;color:#6b6559;margin-top:70px}
+</style>
+<header><nav><a href=#>Index</a><a href=#>Notes</a><a href=#>Archive</a></nav></header>
+<main>
+  <h1>On the maintenance of small tools</h1>
+  <p>A tool that does one thing tends to outlive the framework it was written against. This is not a moral claim about simplicity; it is an observation about surface area.</p>
+  <h2>The cost of a dependency</h2>
+  <p>Every dependency is a bet that someone else will keep caring. Most of those bets are fine. A few are not, and the ones that are not tend to fail at the least convenient moment.</p>
+  <div class=note>Measured over four years, the median unmaintained transitive dependency in our tree was introduced by a package we chose for a single function.</div>
+  <table><tr><th>Year</th><th>Direct deps</th><th>Transitive</th></tr>
+  <tr><td>2022</td><td>14</td><td>388</td></tr><tr><td>2024</td><td>9</td><td>121</td></tr></table>
+  <h2>Subscribe</h2>
+  <p><input placeholder="you@example.com"> <button>Sign up</button></p>
+</main>
+<footer>Written in a plain text editor.</footer>

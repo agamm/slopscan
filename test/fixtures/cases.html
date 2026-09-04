@@ -1,0 +1,32 @@
+<!doctype html><meta charset=utf-8><title>Regression Cases</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f8fafc;color:#0f172a}
+.hero{text-align:center;padding:80px 24px}
+h1{font-size:52px;margin:0 0 14px;color:#0f172a;text-align:center}
+h1 .kw{color:#4d7c94}
+.sub{font-size:19px;color:#475569}
+/* CASE A: icon tile left-aligned in a padded card. corner-nesting must NOT fire. */
+.card{background:#fff;border-radius:16px;padding:16px;margin:20px;width:320px;border:1px solid #e2e8f0}
+.tile{width:48px;height:48px;border-radius:12px;background:rgba(59,130,246,.12);display:grid;place-items:center}
+/* CASE B: a genuinely nested full-width surface. corner-nesting SHOULD fire (16 vs expected 0). */
+.nested{border-radius:16px;background:#f1f5f9;padding:12px;margin-top:12px}
+.ic{width:22px;height:22px;stroke:#3b82f6;fill:none;stroke-width:2}
+</style>
+<div class=hero>
+  <h1>Close deals faster <span class=kw>with Acme Partners</span></h1>
+  <p class=sub>Document analysis for teams that move.</p>
+</div>
+<div class=card>
+  <div class=tile>
+    <svg class="lucide lucide-sparkles" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ic"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"/><path d="M20 2v4"/><path d="M22 4h-4"/></svg>
+  </div>
+  <h3>Rent Rolls</h3>
+  <div class=nested>Any rent roll, standardised.</div>
+</div>
+<div class=card>
+  <div class=tile>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" data-slot="icon" class="ic"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"/></svg>
+  </div>
+  <h3>Heroicons sparkles</h3>
+</div>

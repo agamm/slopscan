@@ -1,0 +1,18 @@
+<!doctype html><meta charset=utf-8><title>Accent Stripe</title>
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#f8fafc;padding:40px;color:#1e1b4b}
+.faq{max-width:640px}
+.q{padding:16px 20px;margin:10px 0;color:#a5b4fc;font-weight:600;font-size:17px}
+/* CASE A: border-left implementation. must fire. */
+.q.on{background:#eef2ff;border-left:4px solid #4338ca;border-radius:0 10px 10px 0}
+/* CASE B: inset box-shadow implementation. must fire. */
+.q.on2{background:#eef2ff;box-shadow:inset 4px 0 0 #4338ca;border-radius:0 10px 10px 0}
+/* CONTROL: 2px muted editorial rule. must NOT fire. */
+.note{border-left:2px solid #8a6d3b;padding:2px 0 2px 15px;margin:22px 0;color:#4a463d}
+</style>
+<div class=faq>
+  <div class=q>What is this?</div>
+  <div class="q on">How often does it run?</div>
+  <div class="q on2">Where does it happen?</div>
+  <div class=note>A two pixel muted rule is the editorial version of this device and should stay clean.</div>
+</div>
