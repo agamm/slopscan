@@ -5,18 +5,20 @@ computed CSS. No network calls, no dependencies, nothing leaves the page.
 
 ## Install as a bookmarklet
 
-<!-- RENDER TEST: does GitHub's markdown sanitiser keep a javascript: href? -->
-<a href="javascript:(()=&gt;{const s=document.createElement('script');s.src='https://agamm.github.io/slopscan/dist/slopscan.js';document.body.appendChild(s);})()">slopscan (drag me)</a>
+### → [agamm.github.io/slopscan](https://agamm.github.io/slopscan/)
 
-[markdown-form drag link](javascript:void\(0\))
+Open that page and drag the button to your bookmarks bar.
 
-Open **https://agamm.github.io/slopscan/** and drag the button to your bookmarks bar.
+It cannot be a drag link in this README. GitHub's Markdown sanitiser strips
+`javascript:` hrefs, verified against the rendered output of this very file: a raw-HTML
+`<a href="javascript:...">` came back as bare text with the anchor removed, and the
+Markdown form came back as nothing. So the drag target has to live on a real HTML page.
 
-Locally instead:
+Locally, without the network:
 
 ```sh
-open dist/install.html          # macOS
-xdg-open dist/install.html      # Linux
+open index.html          # macOS
+xdg-open index.html      # Linux
 ```
 
 ## Or paste it into the console
