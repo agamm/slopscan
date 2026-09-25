@@ -3,17 +3,23 @@
 Finds AI-slop UI patterns on any page and marks them in place. 41 deterministic rules over
 computed CSS. No dependencies, no network, nothing leaves the page.
 
+<a href="https://agamm.github.io/slopscan/"><img src="docs/install-button.svg" alt="Get the bookmarklet" height="44"></a>
+<a href="https://agamm.github.io/slopscan/demo.html"><img src="docs/demo-button.svg" alt="Live demo" height="44"></a>
+
+[![slopscan running on a deliberately sloppy landing page](docs/preview.png)](https://agamm.github.io/slopscan/demo.html)
+
 ## Install
 
 ### Drag it (easiest)
 
 1. Show your bookmarks bar: <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>.
-2. Open **[agamm.github.io/slopscan](https://agamm.github.io/slopscan/)** (offline: `open index.html`).
+2. Click **Get the bookmarklet** above, or open
+   **[agamm.github.io/slopscan](https://agamm.github.io/slopscan/)** (offline: `open index.html`).
 3. Drag the black **slopscan** button onto the bookmarks bar.
 4. Open any site and click the bookmark. Click it again to re-scan, <kbd>Esc</kbd> to clear.
 
-It can't be a drag link in this README: GitHub's sanitiser strips `javascript:` hrefs (verified
-against this file's own rendered output).
+The button can't be dragged straight from this README: GitHub strips `javascript:` links from
+rendered markdown and raw HTML alike, so it opens the install page, which holds the real one.
 
 ### Or paste it by hand
 
