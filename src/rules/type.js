@@ -52,6 +52,17 @@ export const typeRules = [
     },
   },
   {
+    id: 'crushed-tracking',
+    label: 'crushed display tracking',
+    severity: P2, weight: 4,
+    why: 'Headline letter-spacing past -0.05em: tight-is-premium applied until the letters collide.',
+    test(n) {
+      if (n.fontSize < 28 || n.text.length < 3 || n.text.length > 80) return null;
+      const em = n.letterSpacing / n.fontSize;
+      return em <= -0.05 ? `${em.toFixed(3)}em at ${n.fontSize}px` : null;
+    },
+  },
+  {
     id: 'flat-hierarchy',
     label: 'flat type scale',
     severity: P2, weight: 6,

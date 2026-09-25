@@ -1,0 +1,50 @@
+<!doctype html><meta charset=utf-8><title>Newer Tells</title>
+<style>
+*{box-sizing:border-box}
+/* cream-bg */
+body{margin:0;background:#f5efe3;color:#1c1917;font-family:Georgia,serif}
+/* eyebrow-pill NEGATIVE: rounded nav button far above the headline */
+header{display:flex;justify-content:space-between;padding:16px 40px;border-top:4px solid #10b981}
+header a{padding:6px 14px;border-radius:999px;background:#1c1917;color:#fff;text-decoration:none;font-size:13px}
+/* grid-background */
+.hero{padding:160px 40px 60px;background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:40px 40px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;border:1px solid #d6cfc0;font-size:13px}
+/* pulsing-dot */
+.dot{width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.4}}
+/* crushed-tracking positive; the h1 at -0.02em is the negative */
+h1{font-size:56px;letter-spacing:-.02em;margin:10px 0}
+.crushed{font-size:48px;letter-spacing:-.06em;margin:40px}
+/* radial-glow */
+.glow{height:260px;margin:40px;background:radial-gradient(circle at 50% 0,rgba(99,102,241,.25),transparent 70%)}
+/* accent-stripe top edge + thin-border-wide-shadow */
+.card{width:300px;margin:20px 40px;padding:20px;border-radius:12px;background:#fff;border-top:4px solid #10b981}
+.float{width:300px;margin:20px 40px;padding:20px;border-radius:12px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 20px 40px rgba(0,0,0,.15)}
+/* gray-on-color */
+.panel{background:#6d5dfc;padding:30px 40px}
+.panel p{color:#888888}
+/* letter-avatar */
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#f59e0b,#ef4444);margin:8px 40px}
+/* scroll-reveal */
+.reveal{opacity:0;transform:translateY(24px)}
+</style>
+<header><strong>Acme</strong><a href=#>Sign up</a></header>
+<section class=hero>
+  <span class=pill><span class=dot></span>Now in public beta</span>
+  <h1>Ship faster</h1>
+</section>
+<div class=crushed>Tight is premium</div>
+<div class=glow></div>
+<div class=card>Top stripe card</div>
+<div class=float>Two elevation systems at once</div>
+<div class=panel>
+  <p>Grey copy on a violet panel, one.</p>
+  <p>Grey copy on a violet panel, two.</p>
+  <p>Grey copy on a violet panel, three.</p>
+</div>
+<div class=av>JD</div><div class=av>AK</div>
+<section><div class=reveal>
+  <h2>Everything you need</h2>
+  <p>This whole block waits at opacity zero for an intersection observer to fade it in, so a crawler, a screenshot or a reader with reduced motion sees an empty section.</p>
+  <p>A second paragraph pushes the hidden share of the page text well past the threshold for the reveal rule to fire here.</p>
+</div></section>

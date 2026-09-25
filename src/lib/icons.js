@@ -20,5 +20,5 @@ export const svgInfo = svg => ({
   paths: Array.from(svg.querySelectorAll('path')).map(p => p.getAttribute('d') || '').join(' '),
 });
 
-export const EMOJI_RE =
-  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
+// Emoji by presentation, not by code range: arrows, ticks and stars are text glyphs.
+export const EMOJI_RE = /\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F/u;

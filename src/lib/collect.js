@@ -4,22 +4,39 @@ import { familyOf } from './fonts.js';
 const MAX_ELEMENTS = 8000;
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'BR', 'TEMPLATE']);
 
+const PARKED_UI = 'nav,header,dialog,[aria-hidden="true"],[role="navigation"],[role="menu"],[role="dialog"],'
+  + '[role="tooltip"],[role="tabpanel"],[role="listbox"],[aria-roledescription="slide"]';
+
 const directText = el =>
   Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
 
 // One getComputedStyle pass per element. Everything a rule can ask for is read
-// here once, because re-reading computed styles inside 23 rules is the only
+// here once, because re-reading computed styles inside every rule is the only
 // part of this that gets slow.
 export function collectNodes() {
   const nodes = [], byEl = new Map();
+  const hidden = new Set();
+  const revealRoots = [];
+  let hiddenChars = 0, visibleChars = 0;
   const all = document.body ? document.body.querySelectorAll('*') : [];
   for (const el of Array.from(all).slice(0, MAX_ELEMENTS)) {
     if (SKIP_TAGS.has(el.tagName)) continue;
     if (el.closest('svg')) continue;               // shapes have no useful box styles
     const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) continue;
+    if (cs.display === 'none') continue;
     const rect = el.getBoundingClientRect();
     if (rect.width < 2 || rect.height < 2) continue;
+    // opacity does not inherit, so a reveal wrapper's children read as visible
+    const selfHidden = cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05;
+    if (selfHidden || hidden.has(el.parentElement)) {
+      hidden.add(el);
+      // closed menus, dialogs, tabs and slides are hidden by design, not waiting on a scroll
+      if (!el.closest(PARKED_UI)) {
+        if (!hidden.has(el.parentElement) && el.textContent.trim()) revealRoots.push(el);
+        hiddenChars += directText(el).length;
+      }
+    } else visibleChars += directText(el).length;
+    if (selfHidden) continue;
 
     const node = {
       el, rect, cs,
@@ -49,11 +66,14 @@ export function collectNodes() {
       letterSpacing: parseFloat(cs.letterSpacing) || 0,
       filter: cs.filter || 'none',
       easing: cs.transitionTimingFunction || '',
+      animation: cs.animationName && cs.animationName !== 'none' ? cs.animationIterationCount : '',
+      bgSize: cs.backgroundSize || '',
+      italic: cs.fontStyle === 'italic',
       text: directText(el),
     };
     node.maxRadius = Math.max(...node.radii);
     nodes.push(node);
     byEl.set(el, node);
   }
-  return { nodes, byEl };
+  return { nodes, byEl, text: { hidden: hiddenChars, visible: visibleChars, revealRoots } };
 }

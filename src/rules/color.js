@@ -1,5 +1,6 @@
-import { P0, P1 } from '../lib/severity.js';
-import { parseColor, hsl, rgbKey, isPurpleHue, TW_PURPLE } from '../lib/color.js';
+import { P0, P1, P2 } from '../lib/severity.js';
+import { parseColor, hsl, rgbKey, isPurpleHue, TW_PURPLE, isCream, isMidGrey, spread, hex } from '../lib/color.js';
+import { effectiveBg } from '../lib/page.js';
 import { shadowLayers } from '../lib/shadow.js';
 
 export const colorRules = [
@@ -49,6 +50,29 @@ export const colorRules = [
         if (H.s > 0.35 && H.l > 0.2 && H.l < 0.85) return `hue ${Math.round(H.h)}deg glow`;
       }
       return null;
+    },
+  },
+  {
+    id: 'cream-bg',
+    label: 'warm cream page background',
+    severity: P2, weight: 3,
+    why: 'The beige paper ground models now reach for once told to avoid purple-on-white.',
+    test(n, page) {
+      if (n.tag === 'H1' && isCream(page.pageBg)) return `page background ${hex(page.pageBg)}`;
+      const wide = n.rect.width >= window.innerWidth * 0.8 && n.rect.height >= 200;
+      return wide && isCream(n.bg) && !isCream(page.pageBg) ? `section background ${hex(n.bg)}` : null;
+    },
+  },
+  {
+    id: 'gray-on-color',
+    label: 'grey text on a coloured panel',
+    severity: P2, weight: 4,
+    why: 'Neutral mid-grey copy on a tinted surface washes out. The text colour was never re-picked for the panel.',
+    test(n, page) {
+      if (page.grayOnColor < 3 || n.text.length < 12 || !isMidGrey(n.fg)) return null;
+      if (n.el.closest('a,button,[role="button"]')) return null;
+      const bg = effectiveBg(n, page);
+      return bg && spread(bg) >= 40 ? `${hex(n.fg)} on ${hex(bg)}` : null;
     },
   },
 ];

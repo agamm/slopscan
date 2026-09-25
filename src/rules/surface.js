@@ -51,6 +51,12 @@ export const surfaceRules = [
           return `${Math.round(left)}px left border, hue ${Math.round(hsl(c).h)}`;
         }
       }
+      // top-edge variant, only on a rounded card: a full-width top rule is a normal header bar
+      if (top >= 3 && Math.max(left, right, bottom) <= top * 0.5 && n.maxRadius >= 4
+          && n.rect.width < window.innerWidth * 0.9) {
+        const c = parseColor(n.cs.borderTopColor);
+        if (c && c.a > 0.3 && hsl(c).s > 0.2) return `${Math.round(top)}px top border, hue ${Math.round(hsl(c).h)}`;
+      }
       // the same device built with an inset shadow instead of a border
       for (const layer of shadowLayers(n.boxShadow)) {
         if (!layer.inset || !layer.col || layer.col.a < 0.3) continue;
@@ -60,6 +66,23 @@ export const surfaceRules = [
         }
       }
       return null;
+    },
+  },
+  {
+    id: 'thin-border-wide-shadow',
+    label: 'hairline border plus wide shadow',
+    severity: P2, weight: 4,
+    why: 'A 1px border and a soft 16px+ shadow on the same box: two elevation systems where one would do.',
+    test(n) {
+      const cols = [n.cs.borderTopColor, n.cs.borderRightColor, n.cs.borderBottomColor, n.cs.borderLeftColor];
+      const thin = n.borders.filter((b, i) => {
+        const c = parseColor(cols[i]);
+        return b > 0 && b <= 1.5 && c && c.a >= 0.28;
+      }).length;
+      if (thin < 2 || n.rect.height < 24) return null;
+      const layers = shadowLayers(n.boxShadow).filter(l => !l.inset && (!l.col || l.col.a >= 0.12));
+      const blur = Math.max(0, ...layers.map(l => l.off[2]));
+      return blur >= 16 ? `1px border + ${blur}px shadow blur` : null;
     },
   },
   {

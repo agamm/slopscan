@@ -1,5 +1,11 @@
 import { P0, P1, P2 } from '../lib/severity.js';
-import { hsl, contrastRatio } from '../lib/color.js';
+import { hsl, contrastRatio, parseColor, spread } from '../lib/color.js';
+
+// every tile of a repeating background is at most this big: a pattern, not a fill
+const smallTiles = size => {
+  const px = (size.match(/[\d.]+px/g) || []).map(parseFloat);
+  return px.length > 0 && px.every(v => v >= 6 && v <= 160);
+};
 
 export const effectRules = [
   {
@@ -15,6 +21,55 @@ export const effectRules = [
       if (!m || parseFloat(m[1]) < 14) return null;
       const tinted = /gradient\(/.test(n.bgImage) || (n.bg && n.bg.a > 0.1 && hsl(n.bg).s > 0.2);
       return tinted ? `${Math.round(w)}px orb, blur ${m[1]}px` : null;
+    },
+  },
+  {
+    id: 'pulsing-dot',
+    label: 'pulsing status dot',
+    severity: P1, weight: 5,
+    why: 'A tiny dot on an infinite pulse, usually beside "Live" or "Now in beta". Status as decoration.',
+    test(n) {
+      const { width: w, height: h } = n.rect;
+      if (w < 4 || w > 16 || Math.abs(w - h) > 2 || n.maxRadius < w * 0.4) return null;
+      if (n.animation !== 'infinite') return null;
+      return n.bg && n.bg.a > 0.3 ? `${Math.round(w)}px dot, infinite animation` : null;
+    },
+  },
+  {
+    id: 'grid-background',
+    label: 'grid or dot-grid backdrop',
+    severity: P1, weight: 6,
+    why: 'Faint graph-paper lines or a dot matrix behind the hero: texture that says "technical" without content.',
+    test(n) {
+      if (n.rect.width < 200 || n.rect.height < 150 || !smallTiles(n.bgSize)) return null;
+      const lines = (n.bgImage.match(/linear-gradient\(/g) || []).length;
+      if (lines >= 2) return `${lines} line gradients, tile ${n.bgSize.split(',')[0]}`;
+      return /radial-gradient\(/.test(n.bgImage) ? `dot grid, tile ${n.bgSize.split(',')[0]}` : null;
+    },
+  },
+  {
+    id: 'radial-glow',
+    label: 'radial spotlight glow',
+    severity: P1, weight: 6,
+    why: 'A faint coloured radial fade behind a section: the CSS cousin of the blurred orb.',
+    test(n) {
+      if (n.rect.width < 240 || n.rect.height < 160 || smallTiles(n.bgSize)) return null;
+      if (!/radial-gradient\(/.test(n.bgImage)) return null;
+      const stops = (n.bgImage.match(/rgba?\([^)]+\)/g) || []).map(parseColor).filter(Boolean);
+      const colored = stops.filter(c => c.a > 0.02);
+      if (!colored.length || colored.length > 2 || colored.some(c => c.a >= 0.45)) return null;
+      const tint = colored.find(c => spread(c) >= 24);
+      return tint ? `hue ${Math.round(hsl(tint).h)}deg at alpha ${tint.a}` : null;
+    },
+  },
+  {
+    id: 'scroll-reveal',
+    label: 'content hidden until scroll',
+    severity: P2, weight: 5,
+    why: 'Sections parked at opacity 0 for a fade-in. Motion by default, and blank to anything that does not scroll.',
+    test(n, page) {
+      return page.reveal.parents.has(n.el)
+        ? `${Math.round(page.reveal.share * 100)}% of page text invisible at rest` : null;
     },
   },
   {

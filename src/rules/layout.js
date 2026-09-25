@@ -35,7 +35,22 @@ export const layoutRules = [
       const text = n.el.textContent.trim();
       if (!text || text.length > 44) return null;
       const hasSurface = (n.bg && n.bg.a > 0.05) || n.borders[0] > 0;
-      return hasSurface && !n.el.querySelector('h1,h2') ? `"${text.slice(0, 28)}"` : null;
+      if (!hasSurface || n.el.querySelector('h1,h2') || n.el.closest('nav,header,[role="navigation"]')) return null;
+      // it has to sit on the headline, or it is just a rounded nav button
+      const h = document.querySelector('h1') || document.querySelector('h2');
+      if (!h) return null;
+      const hr = h.getBoundingClientRect(), gap = hr.top - n.rect.bottom;
+      const overlaps = n.rect.left < hr.right && n.rect.right > hr.left;
+      return gap >= 0 && gap <= 120 && overlaps ? `"${text.slice(0, 28)}"` : null;
+    },
+  },
+  {
+    id: 'icon-card-grid',
+    label: 'identical icon-topped feature cards',
+    severity: P2, weight: 4,
+    why: 'Three-plus same-width cards, each an icon over a heading over a line of copy: the feature grid by default.',
+    test(n, page) {
+      return page.iconCards.has(n.el) ? `${page.iconCards.size} icon-topped cards` : null;
     },
   },
   {

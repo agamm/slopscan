@@ -35,6 +35,13 @@ export function contrastRatio(a, b) {
 
 export const rgbKey = c => `${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)}`;
 export const colorDist = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b);
+// max channel minus min channel: near 0 is grey, 40+ reads as a colour
+export const spread = c => Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+export const isMidGrey = c => c && c.a >= 0.5 && spread(c) < 20 && hsl(c).l > 0.3 && hsl(c).l < 0.75;
+// warm off-white: light, R >= G >= B, a small but real warmth gap (Impeccable's isCreamColor)
+export const isCream = c => !!c && c.a >= 0.5 && Math.min(c.r, c.g, c.b) >= 209
+  && c.r >= c.g && c.g >= c.b && c.r - c.b >= 6 && c.r - c.b <= 48;
+export const hex = c => '#' + [c.r, c.g, c.b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 export const isPurpleHue = c => { const H = hsl(c); return H.h >= 235 && H.h <= 300 && H.s > 0.3; };
 
 // Tailwind's indigo/violet/purple ramps, byte-exact. A designer who ran a pass

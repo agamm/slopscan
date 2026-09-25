@@ -1,5 +1,6 @@
 import { P0, P1 } from '../lib/severity.js';
 import { hsl } from '../lib/color.js';
+import { isLetterAvatar } from '../lib/page.js';
 import { AI_ICON_RE, HYPE_ICON_RE, AI_PATHS, svgInfo, EMOJI_RE } from '../lib/icons.js';
 
 // :scope > svg so only the immediate wrapper fires, not every ancestor.
@@ -46,6 +47,16 @@ export const iconRules = [
       if (H.s < 0.12) return null;                                    // must be tinted, not grey
       const hasGlyph = n.el.querySelector('svg') || EMOJI_RE.test(n.text);
       return hasGlyph ? `${Math.round(w)}px tile, hue ${Math.round(H.h)}` : null;
+    },
+  },
+  {
+    id: 'letter-avatar',
+    label: 'initial-letter avatars',
+    severity: P1, weight: 5,
+    why: 'Coloured circles with initials in place of real faces: testimonials with nobody behind them.',
+    test(n, page) {
+      if (page.letterAvatars < 2 || !isLetterAvatar(n)) return null;
+      return `"${n.el.textContent.trim()}" in a ${Math.round(n.rect.width)}px circle`;
     },
   },
   {

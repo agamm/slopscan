@@ -11,8 +11,8 @@ export function runScan() {
   if (window[NS] && window[NS].cleanup) window[NS].cleanup();
 
   const started = performance.now();
-  const { nodes, byEl } = collectNodes();
-  const page = buildPageStats(nodes, byEl);
+  const { nodes, byEl, text } = collectNodes();
+  const page = buildPageStats(nodes, byEl, text);
 
   const byId = {};
   for (const node of nodes) {

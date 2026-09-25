@@ -1,4 +1,4 @@
-/* slopscan — deterministic AI-slop UI detector. 18 modules, built 2026-09-04. */
+/* slopscan — deterministic AI-slop UI detector. 18 modules, built 2026-09-25. */
 (() => {
 'use strict';
 
@@ -46,6 +46,13 @@ function contrastRatio(a, b) {
 
 const rgbKey = c => `${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)}`;
 const colorDist = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b);
+// max channel minus min channel: near 0 is grey, 40+ reads as a colour
+const spread = c => Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+const isMidGrey = c => c && c.a >= 0.5 && spread(c) < 20 && hsl(c).l > 0.3 && hsl(c).l < 0.75;
+// warm off-white: light, R >= G >= B, a small but real warmth gap (Impeccable's isCreamColor)
+const isCream = c => !!c && c.a >= 0.5 && Math.min(c.r, c.g, c.b) >= 209
+  && c.r >= c.g && c.g >= c.b && c.r - c.b >= 6 && c.r - c.b <= 48;
+const hex = c => '#' + [c.r, c.g, c.b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
 const isPurpleHue = c => { const H = hsl(c); return H.h >= 235 && H.h <= 300 && H.s > 0.3; };
 
 // Tailwind's indigo/violet/purple ramps, byte-exact. A designer who ran a pass
@@ -55,6 +62,208 @@ const TW_PURPLE = new Set([
   '139,92,246', '124,58,237', '109,40,217', '167,139,250', '196,181,253',
   '168,85,247', '147,51,234', '126,34,206', '192,132,252', '216,180,254',
 ]);
+
+// ---- src/lib/fonts.js ------------------------------------------
+// The published catalogues disagree on single faces: Space Grotesk, Fraunces,
+// Instrument Serif and Geist each sit on one tool's blocklist and another's
+// allowlist. What survives that disagreement is the deployment, not the face.
+//
+//   A = what a model reaches for when it is not trying.
+//   B = the template display faces it reaches for when it is.
+//
+// B-over-A is the fingerprint. Either group alone is weak evidence.
+const FONT_A = [
+  'inter', 'roboto', 'open sans', 'lato', 'poppins', 'montserrat', 'raleway',
+  'nunito', 'nunito sans', 'work sans', 'dm sans', 'source sans', 'helvetica',
+  'helvetica neue', 'arial', 'system-ui', '-apple-system', 'segoe ui', 'ubuntu',
+  'pt sans', 'mulish', 'karla', 'rubik', 'quicksand', 'josefin sans', 'noto sans',
+];
+
+const FONT_B = [
+  'space grotesk', 'instrument serif', 'instrument sans', 'fraunces',
+  'bricolage grotesque', 'sora', 'syne', 'young serif', 'bodoni moda', 'bodoni',
+  'clash display', 'clash grotesk', 'cal sans', 'satoshi', 'general sans',
+  'switzer', 'cabinet grotesk', 'outfit', 'figtree', 'lexend', 'urbanist',
+  'onest', 'plus jakarta sans', 'manrope', 'epilogue', 'be vietnam pro', 'geist',
+  'inter tight', 'playfair display', 'cormorant garamond', 'cormorant', 'lora',
+  'merriweather', 'dm serif display', 'dm serif text', 'newsreader', 'crimson pro',
+  'libre baskerville', 'spectral', 'gloock', 'unbounded', 'chillax', 'ranade',
+  'zodiak', 'supreme', 'sentient', 'boska', 'melodrama', 'gambetta', 'archivo',
+  'chivo', 'red hat display', 'public sans', 'schibsted grotesk', 'hanken grotesk',
+  'anton', 'bebas neue', 'big shoulders display', 'tomorrow', 'gilroy', 'author',
+];
+
+const FONT_MONO = [
+  'jetbrains mono', 'fira code', 'ibm plex mono', 'space mono', 'geist mono',
+  'roboto mono', 'source code pro', 'courier new', 'sf mono', 'ui-monospace',
+  'menlo', 'monaco', 'consolas', 'cascadia code', 'iosevka', 'fragment mono',
+  'martian mono',
+];
+
+// Allow real family variants ("Inter Variable", "Inter Tight") without
+// swallowing unrelated names that merely share a prefix ("Interstate").
+const VARIANT = /^(variable|var|tight|display|text|sans|serif|pro|neue|new|\d+)?$/;
+const inList = (name, list) => list.some(f =>
+  name === f || (name.startsWith(f) && VARIANT.test(name.slice(f.length).trim())));
+
+function fontGroup(name) {
+  if (!name) return null;
+  if (inList(name, FONT_MONO)) return 'mono';
+  if (inList(name, FONT_B)) return 'B';   // check B first: "inter tight" is B, not A
+  if (inList(name, FONT_A)) return 'A';
+  return null;
+}
+
+const familyOf = cs =>
+  (cs.fontFamily || '').split(',')[0].trim().replace(/^['"]|['"]$/g, '').toLowerCase();
+
+// ---- src/lib/page.js -------------------------------------------
+// Most-common value and how dominant it is. Slop is low cardinality with one
+// value dominating; deliberate design spreads across a purposeful few.
+function dominant(counts) {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (!total) return { top: 0, share: 0, n: 0 };
+  const [value, count] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return { top: +value, share: count / total, n: Object.keys(counts).length };
+}
+
+// First opaque background at or above a node, falling back to the page.
+function effectiveBg(n, page) {
+  for (let el = n.el; el; el = el.parentElement) {
+    const x = page.byEl.get(el);
+    if (x && x.bg && x.bg.a >= 0.5) return x.bg;
+    if (x && /gradient\(|url\(/.test(x.bgImage)) return null;   // unknown ground
+  }
+  return page.pageBg;
+}
+
+const isLetterAvatar = n => {
+  const { width: w, height: h } = n.rect;
+  if (w < 28 || w > 96 || Math.abs(w - h) > 8 || n.maxRadius < w / 3) return false;
+  if (!/^[A-Za-z]{1,3}$/.test(n.el.textContent.trim()) || n.el.querySelector('img')) return false;
+  return /gradient\(/.test(n.bgImage) || (n.bg && n.bg.a > 0.3 && hsl(n.bg).s > 0.2);
+};
+
+// A small icon sitting in the top 40% of a card-sized box.
+function hasTopIcon(n) {
+  const { width: w, height: h, top } = n.rect;
+  if (w < 150 || w > 600 || h < 100 || h > 700) return false;
+  const icon = n.el.querySelector(':scope > svg, :scope > img, :scope > * > svg, :scope > * > img');
+  if (!icon) return false;
+  const r = icon.getBoundingClientRect();
+  return r.width > 0 && r.width <= 80 && r.height <= 80 && r.top <= top + h * 0.4;
+}
+
+// 3+ same-width siblings each with a top icon. Outermost group only, so a
+// card and its inner wrapper do not both count.
+function iconCardGrid(nodes) {
+  const groups = new Map();
+  for (const n of nodes) {
+    if (!n.el.parentElement || !hasTopIcon(n)) continue;
+    const key = n.el.parentElement;
+    const bucket = Math.round(n.rect.width / 20);
+    const k = groups.get(key) || new Map();
+    k.set(bucket, [...(k.get(bucket) || []), n.el]);
+    groups.set(key, k);
+  }
+  const cards = new Set();
+  for (const buckets of groups.values()) {
+    for (const els of buckets.values()) if (els.length >= 3) els.forEach(e => cards.add(e));
+  }
+  for (const el of cards) {
+    for (let a = el.parentElement; a; a = a.parentElement) if (cards.has(a)) { cards.delete(el); break; }
+  }
+  return cards;
+}
+
+function buildPageStats(nodes, byEl, text = { hidden: 0, visible: 0, revealRoots: [] }) {
+  const radii = {}, spacing = {}, sizes = {}, bodyChars = {}, headChars = {}, hues = new Set();
+  let totalChars = 0;
+
+  for (const n of nodes) {
+    const circleish = n.maxRadius >= Math.min(n.rect.width, n.rect.height) * 0.4;
+    if (n.maxRadius > 0 && n.maxRadius < 900 && !circleish) radii[n.maxRadius] = (radii[n.maxRadius] || 0) + 1;
+    for (const v of [n.gap, n.padding[0], n.padding[3]]) if (v > 0) spacing[v] = (spacing[v] || 0) + 1;
+    if (n.text.length > 2 && n.fontSize >= 9) sizes[n.fontSize] = (sizes[n.fontSize] || 0) + n.text.length;
+    if (n.text.length && n.font) {
+      bodyChars[n.font] = (bodyChars[n.font] || 0) + n.text.length;
+      totalChars += n.text.length;
+      // display slot is measured separately: a hero face can be a tiny share of
+      // page characters and still be the thing you notice first.
+      if (/^(H1|H2)$/.test(n.tag) || n.fontSize >= 28) {
+        headChars[n.font] = (headChars[n.font] || 0) + n.text.length;
+      }
+    }
+    for (const c of [n.bg, n.fg]) {
+      if (c && c.a > 0.2) { const H = hsl(c); if (H.s > 0.15) hues.add(Math.round(H.h / 30)); }
+    }
+  }
+
+  // page-level counters for the rules that only mean something in aggregate
+  let hairlines = 0, surfaces = 0, steps = 0, statNums = 0, allcaps = 0;
+  for (const n of nodes) {
+    const hasSurface = (n.bg && n.bg.a > 0.05) || n.borders.some(b => b > 0);
+    if (hasSurface && n.rect.width > 60 && n.rect.height > 24) {
+      surfaces++;
+      const even = n.borders.every(b => b > 0 && b <= 1.5);
+      if (even && n.bg) hairlines++;
+    }
+    if (/^0?[1-9]$|^0[1-9]$/.test(n.text) && n.fontSize >= 16) steps++;
+    if (n.fontSize >= 28 && /^[\d.,]+\s*[KMB%+x]{0,2}$/.test(n.text) && n.text.length <= 8) statNums++;
+    if (n.textTransform === 'uppercase' && n.letterSpacing >= n.fontSize * 0.05
+        && n.fontSize <= 15 && n.text.length >= 3 && n.text.length <= 34) allcaps++;
+  }
+  // collect() walks body's descendants, so body itself is never in `nodes`
+  let pageBg = document.body ? parseColor(getComputedStyle(document.body).backgroundColor) : null;
+  if (!pageBg || pageBg.a < 0.5) pageBg = parseColor(getComputedStyle(document.documentElement).backgroundColor);
+  if (!pageBg || pageBg.a < 0.5) pageBg = { r: 255, g: 255, b: 255, a: 1 };
+  const isDark = relativeLuminance(pageBg) < 0.2;
+
+  let letterAvatars = 0, grayOnColor = 0;
+  const partial = { byEl, pageBg };
+  for (const n of nodes) {
+    if (isLetterAvatar(n)) letterAvatars++;
+    if (n.text.length >= 12 && isMidGrey(n.fg) && !n.el.closest('a,button,[role="button"]')) {
+      const bg = effectiveBg(n, partial);
+      if (bg && spread(bg) >= 40) grayOnColor++;
+    }
+  }
+  const totalText = text.hidden + text.visible;
+  const hiddenShare = totalText ? text.hidden / totalText : 0;
+  const revealParents = new Set(
+    text.hidden >= 150 && hiddenShare > 0.3 ? text.revealRoots.map(e => e.parentElement) : []);
+
+  const sizeList = Object.keys(sizes).map(Number).sort((a, b) => a - b);
+  const topFonts = Object.entries(bodyChars).sort((a, b) => b[1] - a[1]).slice(0, 4)
+    .map(([name, c]) => ({ name, pct: totalChars ? Math.round(100 * c / totalChars) : 0, grp: fontGroup(name) }));
+  const body = topFonts[0] || null;
+  const display = (Object.entries(headChars).sort((a, b) => b[1] - a[1])[0] || [null])[0];
+  const pairing = (fontGroup(display) === 'B' && body && body.grp === 'A' && display !== body.name)
+    ? { display, body: body.name } : null;
+
+  const iconSets = { lucide: 0, heroicons: 0, other: 0 };
+  for (const svg of document.querySelectorAll('svg')) {
+    const cls = (svg.getAttribute('class') || '').toLowerCase();
+    if (/lucide/.test(cls)) iconSets.lucide++;
+    else if (svg.getAttribute('data-slot') === 'icon' || svg.getAttribute('stroke-width') === '1.5') iconSets.heroicons++;
+    else iconSets.other++;
+  }
+
+  return {
+    byEl,
+    radius: dominant(radii),
+    spacing: dominant(spacing),
+    typeSizes: sizeList.length,
+    scaleRatio: sizeList.length > 1 ? +(sizeList[sizeList.length - 1] / sizeList[0]).toFixed(2) : 1,
+    hueCount: hues.size,
+    fonts: { top: topFonts, body, display, pairing, mono: topFonts.find(f => f.grp === 'mono' && f.pct >= 25) || null },
+    iconSets,
+    hairline: { count: hairlines, share: surfaces ? hairlines / surfaces : 0, surfaces },
+    steps, statNums, allcaps, isDark, pageBg,
+    iconCards: iconCardGrid(nodes), letterAvatars, grayOnColor,
+    reveal: { share: hiddenShare, chars: text.hidden, parents: revealParents },
+  };
+}
 
 // ---- src/lib/shadow.js -----------------------------------------
 // Split on commas that are not inside rgb()/rgba().
@@ -147,6 +356,29 @@ const colorRules = [
       return null;
     },
   },
+  {
+    id: 'cream-bg',
+    label: 'warm cream page background',
+    severity: P2, weight: 3,
+    why: 'The beige paper ground models now reach for once told to avoid purple-on-white.',
+    test(n, page) {
+      if (n.tag === 'H1' && isCream(page.pageBg)) return `page background ${hex(page.pageBg)}`;
+      const wide = n.rect.width >= window.innerWidth * 0.8 && n.rect.height >= 200;
+      return wide && isCream(n.bg) && !isCream(page.pageBg) ? `section background ${hex(n.bg)}` : null;
+    },
+  },
+  {
+    id: 'gray-on-color',
+    label: 'grey text on a coloured panel',
+    severity: P2, weight: 4,
+    why: 'Neutral mid-grey copy on a tinted surface washes out. The text colour was never re-picked for the panel.',
+    test(n, page) {
+      if (page.grayOnColor < 3 || n.text.length < 12 || !isMidGrey(n.fg)) return null;
+      if (n.el.closest('a,button,[role="button"]')) return null;
+      const bg = effectiveBg(n, page);
+      return bg && spread(bg) >= 40 ? `${hex(n.fg)} on ${hex(bg)}` : null;
+    },
+  },
 ];
 
 // ---- src/rules/surface.js --------------------------------------
@@ -199,6 +431,12 @@ const surfaceRules = [
           return `${Math.round(left)}px left border, hue ${Math.round(hsl(c).h)}`;
         }
       }
+      // top-edge variant, only on a rounded card: a full-width top rule is a normal header bar
+      if (top >= 3 && Math.max(left, right, bottom) <= top * 0.5 && n.maxRadius >= 4
+          && n.rect.width < window.innerWidth * 0.9) {
+        const c = parseColor(n.cs.borderTopColor);
+        if (c && c.a > 0.3 && hsl(c).s > 0.2) return `${Math.round(top)}px top border, hue ${Math.round(hsl(c).h)}`;
+      }
       // the same device built with an inset shadow instead of a border
       for (const layer of shadowLayers(n.boxShadow)) {
         if (!layer.inset || !layer.col || layer.col.a < 0.3) continue;
@@ -208,6 +446,23 @@ const surfaceRules = [
         }
       }
       return null;
+    },
+  },
+  {
+    id: 'thin-border-wide-shadow',
+    label: 'hairline border plus wide shadow',
+    severity: P2, weight: 4,
+    why: 'A 1px border and a soft 16px+ shadow on the same box: two elevation systems where one would do.',
+    test(n) {
+      const cols = [n.cs.borderTopColor, n.cs.borderRightColor, n.cs.borderBottomColor, n.cs.borderLeftColor];
+      const thin = n.borders.filter((b, i) => {
+        const c = parseColor(cols[i]);
+        return b > 0 && b <= 1.5 && c && c.a >= 0.28;
+      }).length;
+      if (thin < 2 || n.rect.height < 24) return null;
+      const layers = shadowLayers(n.boxShadow).filter(l => !l.inset && (!l.col || l.col.a >= 0.12));
+      const blur = Math.max(0, ...layers.map(l => l.off[2]));
+      return blur >= 16 ? `1px border + ${blur}px shadow blur` : null;
     },
   },
   {
@@ -253,60 +508,6 @@ const surfaceRules = [
     },
   },
 ];
-
-// ---- src/lib/fonts.js ------------------------------------------
-// The published catalogues disagree on single faces: Space Grotesk, Fraunces,
-// Instrument Serif and Geist each sit on one tool's blocklist and another's
-// allowlist. What survives that disagreement is the deployment, not the face.
-//
-//   A = what a model reaches for when it is not trying.
-//   B = the template display faces it reaches for when it is.
-//
-// B-over-A is the fingerprint. Either group alone is weak evidence.
-const FONT_A = [
-  'inter', 'roboto', 'open sans', 'lato', 'poppins', 'montserrat', 'raleway',
-  'nunito', 'nunito sans', 'work sans', 'dm sans', 'source sans', 'helvetica',
-  'helvetica neue', 'arial', 'system-ui', '-apple-system', 'segoe ui', 'ubuntu',
-  'pt sans', 'mulish', 'karla', 'rubik', 'quicksand', 'josefin sans', 'noto sans',
-];
-
-const FONT_B = [
-  'space grotesk', 'instrument serif', 'instrument sans', 'fraunces',
-  'bricolage grotesque', 'sora', 'syne', 'young serif', 'bodoni moda', 'bodoni',
-  'clash display', 'clash grotesk', 'cal sans', 'satoshi', 'general sans',
-  'switzer', 'cabinet grotesk', 'outfit', 'figtree', 'lexend', 'urbanist',
-  'onest', 'plus jakarta sans', 'manrope', 'epilogue', 'be vietnam pro', 'geist',
-  'inter tight', 'playfair display', 'cormorant garamond', 'cormorant', 'lora',
-  'merriweather', 'dm serif display', 'dm serif text', 'newsreader', 'crimson pro',
-  'libre baskerville', 'spectral', 'gloock', 'unbounded', 'chillax', 'ranade',
-  'zodiak', 'supreme', 'sentient', 'boska', 'melodrama', 'gambetta', 'archivo',
-  'chivo', 'red hat display', 'public sans', 'schibsted grotesk', 'hanken grotesk',
-  'anton', 'bebas neue', 'big shoulders display', 'tomorrow', 'gilroy', 'author',
-];
-
-const FONT_MONO = [
-  'jetbrains mono', 'fira code', 'ibm plex mono', 'space mono', 'geist mono',
-  'roboto mono', 'source code pro', 'courier new', 'sf mono', 'ui-monospace',
-  'menlo', 'monaco', 'consolas', 'cascadia code', 'iosevka', 'fragment mono',
-  'martian mono',
-];
-
-// Allow real family variants ("Inter Variable", "Inter Tight") without
-// swallowing unrelated names that merely share a prefix ("Interstate").
-const VARIANT = /^(variable|var|tight|display|text|sans|serif|pro|neue|new|\d+)?$/;
-const inList = (name, list) => list.some(f =>
-  name === f || (name.startsWith(f) && VARIANT.test(name.slice(f.length).trim())));
-
-function fontGroup(name) {
-  if (!name) return null;
-  if (inList(name, FONT_MONO)) return 'mono';
-  if (inList(name, FONT_B)) return 'B';   // check B first: "inter tight" is B, not A
-  if (inList(name, FONT_A)) return 'A';
-  return null;
-}
-
-const familyOf = cs =>
-  (cs.fontFamily || '').split(',')[0].trim().replace(/^['"]|['"]$/g, '').toLowerCase();
 
 // ---- src/rules/type.js -----------------------------------------
 const isDisplay = (n, min = 24) => /^(H1|H2|H3)$/.test(n.tag) || n.fontSize >= min;
@@ -360,6 +561,17 @@ const typeRules = [
     },
   },
   {
+    id: 'crushed-tracking',
+    label: 'crushed display tracking',
+    severity: P2, weight: 4,
+    why: 'Headline letter-spacing past -0.05em: tight-is-premium applied until the letters collide.',
+    test(n) {
+      if (n.fontSize < 28 || n.text.length < 3 || n.text.length > 80) return null;
+      const em = n.letterSpacing / n.fontSize;
+      return em <= -0.05 ? `${em.toFixed(3)}em at ${n.fontSize}px` : null;
+    },
+  },
+  {
     id: 'flat-hierarchy',
     label: 'flat type scale',
     severity: P2, weight: 6,
@@ -406,7 +618,22 @@ const layoutRules = [
       const text = n.el.textContent.trim();
       if (!text || text.length > 44) return null;
       const hasSurface = (n.bg && n.bg.a > 0.05) || n.borders[0] > 0;
-      return hasSurface && !n.el.querySelector('h1,h2') ? `"${text.slice(0, 28)}"` : null;
+      if (!hasSurface || n.el.querySelector('h1,h2') || n.el.closest('nav,header,[role="navigation"]')) return null;
+      // it has to sit on the headline, or it is just a rounded nav button
+      const h = document.querySelector('h1') || document.querySelector('h2');
+      if (!h) return null;
+      const hr = h.getBoundingClientRect(), gap = hr.top - n.rect.bottom;
+      const overlaps = n.rect.left < hr.right && n.rect.right > hr.left;
+      return gap >= 0 && gap <= 120 && overlaps ? `"${text.slice(0, 28)}"` : null;
+    },
+  },
+  {
+    id: 'icon-card-grid',
+    label: 'identical icon-topped feature cards',
+    severity: P2, weight: 4,
+    why: 'Three-plus same-width cards, each an icon over a heading over a line of copy: the feature grid by default.',
+    test(n, page) {
+      return page.iconCards.has(n.el) ? `${page.iconCards.size} icon-topped cards` : null;
     },
   },
   {
@@ -444,8 +671,8 @@ const svgInfo = svg => ({
   paths: Array.from(svg.querySelectorAll('path')).map(p => p.getAttribute('d') || '').join(' '),
 });
 
-const EMOJI_RE =
-  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
+// Emoji by presentation, not by code range: arrows, ticks and stars are text glyphs.
+const EMOJI_RE = /\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F/u;
 
 // ---- src/rules/iconography.js ----------------------------------
 // :scope > svg so only the immediate wrapper fires, not every ancestor.
@@ -495,6 +722,16 @@ const iconRules = [
     },
   },
   {
+    id: 'letter-avatar',
+    label: 'initial-letter avatars',
+    severity: P1, weight: 5,
+    why: 'Coloured circles with initials in place of real faces: testimonials with nobody behind them.',
+    test(n, page) {
+      if (page.letterAvatars < 2 || !isLetterAvatar(n)) return null;
+      return `"${n.el.textContent.trim()}" in a ${Math.round(n.rect.width)}px circle`;
+    },
+  },
+  {
     id: 'emoji-ui',
     label: 'emoji in UI chrome',
     severity: P1, weight: 6,
@@ -507,6 +744,12 @@ const iconRules = [
 ];
 
 // ---- src/rules/effects.js --------------------------------------
+// every tile of a repeating background is at most this big: a pattern, not a fill
+const smallTiles = size => {
+  const px = (size.match(/[\d.]+px/g) || []).map(parseFloat);
+  return px.length > 0 && px.every(v => v >= 6 && v <= 160);
+};
+
 const effectRules = [
   {
     id: 'blur-orb',
@@ -521,6 +764,55 @@ const effectRules = [
       if (!m || parseFloat(m[1]) < 14) return null;
       const tinted = /gradient\(/.test(n.bgImage) || (n.bg && n.bg.a > 0.1 && hsl(n.bg).s > 0.2);
       return tinted ? `${Math.round(w)}px orb, blur ${m[1]}px` : null;
+    },
+  },
+  {
+    id: 'pulsing-dot',
+    label: 'pulsing status dot',
+    severity: P1, weight: 5,
+    why: 'A tiny dot on an infinite pulse, usually beside "Live" or "Now in beta". Status as decoration.',
+    test(n) {
+      const { width: w, height: h } = n.rect;
+      if (w < 4 || w > 16 || Math.abs(w - h) > 2 || n.maxRadius < w * 0.4) return null;
+      if (n.animation !== 'infinite') return null;
+      return n.bg && n.bg.a > 0.3 ? `${Math.round(w)}px dot, infinite animation` : null;
+    },
+  },
+  {
+    id: 'grid-background',
+    label: 'grid or dot-grid backdrop',
+    severity: P1, weight: 6,
+    why: 'Faint graph-paper lines or a dot matrix behind the hero: texture that says "technical" without content.',
+    test(n) {
+      if (n.rect.width < 200 || n.rect.height < 150 || !smallTiles(n.bgSize)) return null;
+      const lines = (n.bgImage.match(/linear-gradient\(/g) || []).length;
+      if (lines >= 2) return `${lines} line gradients, tile ${n.bgSize.split(',')[0]}`;
+      return /radial-gradient\(/.test(n.bgImage) ? `dot grid, tile ${n.bgSize.split(',')[0]}` : null;
+    },
+  },
+  {
+    id: 'radial-glow',
+    label: 'radial spotlight glow',
+    severity: P1, weight: 6,
+    why: 'A faint coloured radial fade behind a section: the CSS cousin of the blurred orb.',
+    test(n) {
+      if (n.rect.width < 240 || n.rect.height < 160 || smallTiles(n.bgSize)) return null;
+      if (!/radial-gradient\(/.test(n.bgImage)) return null;
+      const stops = (n.bgImage.match(/rgba?\([^)]+\)/g) || []).map(parseColor).filter(Boolean);
+      const colored = stops.filter(c => c.a > 0.02);
+      if (!colored.length || colored.length > 2 || colored.some(c => c.a >= 0.45)) return null;
+      const tint = colored.find(c => spread(c) >= 24);
+      return tint ? `hue ${Math.round(hsl(tint).h)}deg at alpha ${tint.a}` : null;
+    },
+  },
+  {
+    id: 'scroll-reveal',
+    label: 'content hidden until scroll',
+    severity: P2, weight: 5,
+    why: 'Sections parked at opacity 0 for a fade-in. Motion by default, and blank to anything that does not scroll.',
+    test(n, page) {
+      return page.reveal.parents.has(n.el)
+        ? `${Math.round(page.reveal.share * 100)}% of page text invisible at rest` : null;
     },
   },
   {
@@ -621,22 +913,39 @@ const RULES = [
 const MAX_ELEMENTS = 8000;
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'BR', 'TEMPLATE']);
 
+const PARKED_UI = 'nav,header,dialog,[aria-hidden="true"],[role="navigation"],[role="menu"],[role="dialog"],'
+  + '[role="tooltip"],[role="tabpanel"],[role="listbox"],[aria-roledescription="slide"]';
+
 const directText = el =>
   Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
 
 // One getComputedStyle pass per element. Everything a rule can ask for is read
-// here once, because re-reading computed styles inside 23 rules is the only
+// here once, because re-reading computed styles inside every rule is the only
 // part of this that gets slow.
 function collectNodes() {
   const nodes = [], byEl = new Map();
+  const hidden = new Set();
+  const revealRoots = [];
+  let hiddenChars = 0, visibleChars = 0;
   const all = document.body ? document.body.querySelectorAll('*') : [];
   for (const el of Array.from(all).slice(0, MAX_ELEMENTS)) {
     if (SKIP_TAGS.has(el.tagName)) continue;
     if (el.closest('svg')) continue;               // shapes have no useful box styles
     const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) continue;
+    if (cs.display === 'none') continue;
     const rect = el.getBoundingClientRect();
     if (rect.width < 2 || rect.height < 2) continue;
+    // opacity does not inherit, so a reveal wrapper's children read as visible
+    const selfHidden = cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05;
+    if (selfHidden || hidden.has(el.parentElement)) {
+      hidden.add(el);
+      // closed menus, dialogs, tabs and slides are hidden by design, not waiting on a scroll
+      if (!el.closest(PARKED_UI)) {
+        if (!hidden.has(el.parentElement) && el.textContent.trim()) revealRoots.push(el);
+        hiddenChars += directText(el).length;
+      }
+    } else visibleChars += directText(el).length;
+    if (selfHidden) continue;
 
     const node = {
       el, rect, cs,
@@ -666,96 +975,16 @@ function collectNodes() {
       letterSpacing: parseFloat(cs.letterSpacing) || 0,
       filter: cs.filter || 'none',
       easing: cs.transitionTimingFunction || '',
+      animation: cs.animationName && cs.animationName !== 'none' ? cs.animationIterationCount : '',
+      bgSize: cs.backgroundSize || '',
+      italic: cs.fontStyle === 'italic',
       text: directText(el),
     };
     node.maxRadius = Math.max(...node.radii);
     nodes.push(node);
     byEl.set(el, node);
   }
-  return { nodes, byEl };
-}
-
-// ---- src/lib/page.js -------------------------------------------
-// Most-common value and how dominant it is. Slop is low cardinality with one
-// value dominating; deliberate design spreads across a purposeful few.
-function dominant(counts) {
-  const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  if (!total) return { top: 0, share: 0, n: 0 };
-  const [value, count] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
-  return { top: +value, share: count / total, n: Object.keys(counts).length };
-}
-
-function buildPageStats(nodes, byEl) {
-  const radii = {}, spacing = {}, sizes = {}, bodyChars = {}, headChars = {}, hues = new Set();
-  let totalChars = 0;
-
-  for (const n of nodes) {
-    const circleish = n.maxRadius >= Math.min(n.rect.width, n.rect.height) * 0.4;
-    if (n.maxRadius > 0 && n.maxRadius < 900 && !circleish) radii[n.maxRadius] = (radii[n.maxRadius] || 0) + 1;
-    for (const v of [n.gap, n.padding[0], n.padding[3]]) if (v > 0) spacing[v] = (spacing[v] || 0) + 1;
-    if (n.text.length > 2 && n.fontSize >= 9) sizes[n.fontSize] = (sizes[n.fontSize] || 0) + n.text.length;
-    if (n.text.length && n.font) {
-      bodyChars[n.font] = (bodyChars[n.font] || 0) + n.text.length;
-      totalChars += n.text.length;
-      // display slot is measured separately: a hero face can be a tiny share of
-      // page characters and still be the thing you notice first.
-      if (/^(H1|H2)$/.test(n.tag) || n.fontSize >= 28) {
-        headChars[n.font] = (headChars[n.font] || 0) + n.text.length;
-      }
-    }
-    for (const c of [n.bg, n.fg]) {
-      if (c && c.a > 0.2) { const H = hsl(c); if (H.s > 0.15) hues.add(Math.round(H.h / 30)); }
-    }
-  }
-
-  // page-level counters for the rules that only mean something in aggregate
-  let hairlines = 0, surfaces = 0, steps = 0, statNums = 0, allcaps = 0;
-  for (const n of nodes) {
-    const hasSurface = (n.bg && n.bg.a > 0.05) || n.borders.some(b => b > 0);
-    if (hasSurface && n.rect.width > 60 && n.rect.height > 24) {
-      surfaces++;
-      const even = n.borders.every(b => b > 0 && b <= 1.5);
-      if (even && n.bg) hairlines++;
-    }
-    if (/^0?[1-9]$|^0[1-9]$/.test(n.text) && n.fontSize >= 16) steps++;
-    if (n.fontSize >= 28 && /^[\d.,]+\s*[KMB%+x]{0,2}$/.test(n.text) && n.text.length <= 8) statNums++;
-    if (n.textTransform === 'uppercase' && n.letterSpacing >= n.fontSize * 0.05
-        && n.fontSize <= 15 && n.text.length >= 3 && n.text.length <= 34) allcaps++;
-  }
-  // collect() walks body's descendants, so body itself is never in `nodes`
-  let pageBg = document.body ? parseColor(getComputedStyle(document.body).backgroundColor) : null;
-  if (!pageBg || pageBg.a < 0.5) pageBg = parseColor(getComputedStyle(document.documentElement).backgroundColor);
-  if (!pageBg || pageBg.a < 0.5) pageBg = { r: 255, g: 255, b: 255, a: 1 };
-  const isDark = relativeLuminance(pageBg) < 0.2;
-
-  const sizeList = Object.keys(sizes).map(Number).sort((a, b) => a - b);
-  const topFonts = Object.entries(bodyChars).sort((a, b) => b[1] - a[1]).slice(0, 4)
-    .map(([name, c]) => ({ name, pct: totalChars ? Math.round(100 * c / totalChars) : 0, grp: fontGroup(name) }));
-  const body = topFonts[0] || null;
-  const display = (Object.entries(headChars).sort((a, b) => b[1] - a[1])[0] || [null])[0];
-  const pairing = (fontGroup(display) === 'B' && body && body.grp === 'A' && display !== body.name)
-    ? { display, body: body.name } : null;
-
-  const iconSets = { lucide: 0, heroicons: 0, other: 0 };
-  for (const svg of document.querySelectorAll('svg')) {
-    const cls = (svg.getAttribute('class') || '').toLowerCase();
-    if (/lucide/.test(cls)) iconSets.lucide++;
-    else if (svg.getAttribute('data-slot') === 'icon' || svg.getAttribute('stroke-width') === '1.5') iconSets.heroicons++;
-    else iconSets.other++;
-  }
-
-  return {
-    byEl,
-    radius: dominant(radii),
-    spacing: dominant(spacing),
-    typeSizes: sizeList.length,
-    scaleRatio: sizeList.length > 1 ? +(sizeList[sizeList.length - 1] / sizeList[0]).toFixed(2) : 1,
-    hueCount: hues.size,
-    fonts: { top: topFonts, body, display, pairing, mono: topFonts.find(f => f.grp === 'mono' && f.pct >= 25) || null },
-    iconSets,
-    hairline: { count: hairlines, share: surfaces ? hairlines / surfaces : 0, surfaces },
-    steps, statNums, allcaps, isDark, pageBg,
-  };
+  return { nodes, byEl, text: { hidden: hiddenChars, visible: visibleChars, revealRoots } };
 }
 
 // ---- src/ui/style.js -------------------------------------------
@@ -994,8 +1223,8 @@ function runScan() {
   if (window[NS] && window[NS].cleanup) window[NS].cleanup();
 
   const started = performance.now();
-  const { nodes, byEl } = collectNodes();
-  const page = buildPageStats(nodes, byEl);
+  const { nodes, byEl, text } = collectNodes();
+  const page = buildPageStats(nodes, byEl, text);
 
   const byId = {};
   for (const node of nodes) {

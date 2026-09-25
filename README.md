@@ -1,15 +1,30 @@
 # slopscan
 
-Finds AI-slop UI patterns on any page and marks them in place. 31 deterministic rules over
+Finds AI-slop UI patterns on any page and marks them in place. 41 deterministic rules over
 computed CSS. No dependencies, no network, nothing leaves the page.
 
 ## Install
 
-**→ [agamm.github.io/slopscan](https://agamm.github.io/slopscan/)** — drag the button to your
-bookmarks bar.
+### Drag it (easiest)
+
+1. Show your bookmarks bar: <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>.
+2. Open **[agamm.github.io/slopscan](https://agamm.github.io/slopscan/)** (offline: `open index.html`).
+3. Drag the black **slopscan** button onto the bookmarks bar.
+4. Open any site and click the bookmark. Click it again to re-scan, <kbd>Esc</kbd> to clear.
 
 It can't be a drag link in this README: GitHub's sanitiser strips `javascript:` hrefs (verified
-against this file's own rendered output). Offline, `open index.html`.
+against this file's own rendered output).
+
+### Or paste it by hand
+
+If dragging doesn't work, make a bookmark whose URL is the contents of `dist/bookmarklet.txt`
+(it starts with `javascript:`). Copy it with `pbcopy < dist/bookmarklet.txt`, then:
+
+- **Chrome / Edge / Brave**: right-click the bookmarks bar, **Add page…**, name it `slopscan`,
+  paste into **URL**.
+- **Firefox**: right-click the bookmarks toolbar, **Add Bookmark…**, paste into **URL**.
+- **Safari**: bookmark any page (<kbd>Cmd</kbd> + <kbd>D</kbd>) into Favorites, then
+  **Bookmarks → Edit Bookmarks**, right-click it, **Edit Address**, and paste.
 
 Console fallback for sites whose CSP blocks bookmarklets: paste `dist/slopscan.js` into devtools.
 
@@ -32,20 +47,26 @@ check:
 
 ## Rules
 
-31, grouped by file under `src/rules/`.
+41, grouped by file under `src/rules/`.
 
-- **color** — gradient-purple, tw-purple, gradient-text, colored-glow
-- **surface** — glassmorphism, radius-monoculture, tw-shadow, accent-stripe, uniform-spacing, oversized-shadow, corner-nesting
-- **type** — font-pairing, font-template, mono-body, flat-hierarchy, font-default
-- **layout** — hero-keyword, eyebrow-pill, centered-hero
-- **iconography** — ai-icon, icon-tile, emoji-ui, hype-icon
-- **effects** — blur-orb, perma-dark, numbered-steps, stat-banner, hairline-everywhere, springy-easing, nested-cards, allcaps-label
+- **color**: gradient-purple, tw-purple, gradient-text, colored-glow, cream-bg, gray-on-color
+- **surface**: glassmorphism, radius-monoculture, tw-shadow, accent-stripe, uniform-spacing, oversized-shadow, corner-nesting, thin-border-wide-shadow
+- **type**: font-pairing, font-template, mono-body, flat-hierarchy, font-default, crushed-tracking
+- **layout**: hero-keyword, eyebrow-pill, centered-hero, icon-card-grid
+- **iconography**: ai-icon, icon-tile, emoji-ui, hype-icon, letter-avatar
+- **effects**: blur-orb, perma-dark, numbered-steps, stat-banner, hairline-everywhere, springy-easing, nested-cards, allcaps-label, pulsing-dot, grid-background, radial-glow, scroll-reveal
 
 Fonts are grouped, not blocklisted, because the published catalogues contradict each other:
 Space Grotesk, Fraunces, Instrument Serif and Geist each sit on one tool's slop list **and**
 another's allowlist. So group A is what a model reaches for when it isn't trying (Inter, Poppins,
 Montserrat), group B is the template display faces it reaches for when it is. **B over A** is the
 fingerprint; either alone is weak.
+
+Rules added from other detectors' catalogues were checked against live sites before landing:
+[slop-detect](https://github.com/ravidsrk/slop-detect),
+[design-slop-cop](https://github.com/AdrianKrebs/design-slop-cop) and
+[Impeccable](https://github.com/pbakaus/impeccable). `icon-card-grid` and `crushed-tracking` sit at
+P2 because they also fire on Stripe and Vercel.
 
 ## Adding a rule
 
@@ -74,7 +95,7 @@ concatenates into one IIFE, `node --check`s it. Emits `dist/slopscan.js` (consol
 
 ## Limitations
 
-- **The score is not calibrated.** Weights are a first guess and the sum saturates quickly at 31
+- **The score is not calibrated.** Weights are a first guess and the sum saturates quickly at 41
   rules. Read the rule list, not the number.
 - **Presence checks misfire.** linear.app trips `font-default` and `glassmorphism` while being
   well designed. The distribution rules correctly stay quiet on it. Trust those.
