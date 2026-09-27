@@ -1,5 +1,6 @@
 import { SEV_COLOR } from '../lib/severity.js';
 import { overlayCSS } from './style.js';
+import { makePopover } from './popover.js';
 
 const PER_RULE_CAP = 40, TOTAL_CAP = 260;
 
@@ -34,6 +35,7 @@ export function paint(NS, shown, report) {
     zIndex: '2147483645', pointerEvents: 'none',
   });
   document.body.appendChild(layer);
+  const pop = makePopover(NS, layer);
 
   const sx = window.scrollX, sy = window.scrollY;
   const vpArea = window.innerWidth * window.innerHeight;
@@ -64,12 +66,9 @@ export function paint(NS, shown, report) {
     tag.className = 'ss-tag';
     tag.dataset.det = hit.rule.id;
     tag.textContent = hit.rule.label;
-    tag.title = `${hit.rule.id} — ${hit.evidence}\n\n${hit.rule.why}`;
+    tag.title = 'Click for why this fired';
     tag.style.cssText = `--c:${colour};left:-9999px;top:0;animation:none`;
-    tag.onclick = () => {
-      console.log('[slopscan]', hit.rule.id, '->', hit.evidence, hit.node.el);
-      hit.node.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    };
+    tag.onclick = () => pop.open(hit, tag);
     layer.appendChild(tag);
     pending.push({ hit, tag, bx, by, delay, colour });
   }
@@ -93,5 +92,5 @@ export function paint(NS, shown, report) {
     p.tag.style.cssText = `--c:${p.colour};--d:${p.delay}ms;left:${spot[0]}px;top:${spot[1]}px`;
   }
 
-  return { layer, style, sweep };
+  return { layer, style, sweep, pop };
 }

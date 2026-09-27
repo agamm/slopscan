@@ -35,13 +35,14 @@ export function runScan() {
     ms: Math.round(performance.now() - started),
   };
 
-  const { layer, style, sweep } = paint(NS, shown, report);
+  const { layer, style, sweep, pop } = paint(NS, shown, report);
   const cleanup = () => {
-    layer.remove(); style.remove(); sweep.remove(); hud.remove();
+    pop.dispose(); layer.remove(); style.remove(); sweep.remove(); hud.remove();
     document.removeEventListener('keydown', onKey);
     delete window[NS];
   };
-  const onKey = e => { if (e.key === 'Escape') cleanup(); };
+  // Esc closes an open explanation first, then the whole overlay
+  const onKey = e => { if (e.key === 'Escape' && !pop.close()) cleanup(); };
   const hud = buildHUD(NS, report, layer, cleanup);
   document.addEventListener('keydown', onKey);
 

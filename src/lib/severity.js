@@ -2,3 +2,4 @@
 export const P0 = 0, P1 = 1, P2 = 2;
 export const SEV_COLOR = ['#ff2d55', '#ffb020', '#38bdf8'];
 export const SEV_NAME = ['P0', 'P1', 'P2'];
+export const SEV_DESC = ['screams AI on sight', 'the obvious smell', 'cosmetic'];

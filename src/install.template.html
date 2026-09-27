@@ -1,63 +1,65 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>slopscan — install</title>
+<title>slopscan</title>
 <style>
-:root{color-scheme:light dark;--ink:#14141a;--dim:#6b6b78;--line:#e4e4ec;--bg:#fbfbfd;--card:#fff}
-@media (prefers-color-scheme:dark){:root{--ink:#e8e8ef;--dim:#8b8b9b;--line:#26262f;--bg:#0b0b0f;--card:#131319}}
+:root{color-scheme:light dark;--ink:#14141a;--dim:#6b6b78;--line:#d9d9e3;--bg:#fbfbfd;--bar:#eeeef3;--accent:#ff2d55}
+@media (prefers-color-scheme:dark){:root{--ink:#e8e8ef;--dim:#8b8b9b;--line:#2c2c36;--bg:#0b0b0f;--bar:#16161d}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);padding:56px 24px;
-  font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
-main{max-width:620px;margin:0 auto}
-h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
-p{color:var(--dim);margin:0 0 20px;max-width:56ch}
-.drag{display:flex;align-items:center;gap:16px;border:1px dashed var(--line);border-radius:10px;
-  padding:20px;background:var(--card);margin:26px 0}
-a.bm{display:inline-block;background:var(--ink);color:var(--bg);text-decoration:none;
-  padding:9px 18px;border-radius:7px;font-weight:600;cursor:grab;white-space:nowrap}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center}
+
+/* a stand-in for the browser's bookmarks bar, so "up there" has a target */
+.bar{height:44px;background:var(--bar);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px}
+.bar i{width:64px;height:10px;border-radius:5px;background:var(--line)}
+.slot{position:relative;width:104px;height:28px;border:1.5px dashed var(--accent);border-radius:7px}
+.chip{position:absolute;inset:3px;border-radius:5px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;
+  line-height:19px;opacity:0;animation:land 3.2s ease-in-out infinite}
+
+/* the path the button travels: dashes flowing upward into the slot */
+.arrow{position:relative;width:2px;height:100px;margin:10px auto 0;
+  background:repeating-linear-gradient(to top,var(--dim) 0 6px,transparent 6px 12px);animation:flow .9s linear infinite}
+.arrow::before{content:'';position:absolute;left:-6px;top:-2px;width:10px;height:10px;
+  border-left:2px solid var(--dim);border-top:2px solid var(--dim);transform:rotate(45deg)}
+
+.btn{position:relative;width:max-content;margin:8px auto 0}
+a.bm{display:inline-block;height:44px;line-height:44px;padding:0 26px;border-radius:9px;background:var(--ink);color:var(--bg);
+  text-decoration:none;font-weight:700;font-size:16px;cursor:grab;box-shadow:0 0 0 0 var(--accent);
+  transition:transform .15s,box-shadow .15s}
+a.bm:hover{transform:translateY(-2px);box-shadow:0 0 0 3px var(--accent)}
 a.bm:active{cursor:grabbing}
-.hint{font-size:13px;color:var(--dim)}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);
-  margin:34px 0 10px;font-weight:600}
-ol{color:var(--dim);padding-left:20px}li{margin:5px 0}
-code{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px}
-.k{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:7px 0;font-size:13px}
-.k b{font-weight:600}
-footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
-</style></head><body><main>
-<h1>slopscan</h1>
-<p>Finds AI-slop UI patterns on any page and marks them in place. __RULES__ deterministic rules over computed CSS. No network, no tracking, nothing leaves the page.</p>
+/* a ghost of the button rehearses the drag, 162px = button centre to slot centre */
+.ghost{position:absolute;inset:0;border-radius:9px;background:var(--ink);color:var(--bg);font-weight:700;font-size:16px;
+  line-height:44px;pointer-events:none;opacity:0;animation:rise 3.2s ease-in-out infinite}
 
-<div class="drag">
-  <a class="bm" href="__BOOKMARKLET__">slopscan</a>
-  <span class="hint">&#8592; drag this to your bookmarks bar</span>
-</div>
+.hint{margin:18px 0 4px;font-weight:600}
+.keys{margin:0;color:var(--dim);font-size:13px}
+kbd{font:inherit;font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px}
 
-<p><a href="demo.html" style="color:var(--ink)">See it running on a demo page &#8594;</a></p>
+main{margin:64px auto 48px;max-width:420px;padding:0 20px}
+h1{font-size:22px;margin:0 0 4px}
+main p{color:var(--dim);margin:0 0 18px}
+main a{color:var(--ink)}
 
-<h2>Install</h2>
-<ol>
-  <li>Show the bookmarks bar (<code>Cmd/Ctrl</code> + <code>Shift</code> + <code>B</code>).</li>
-  <li>Drag the black <b>slopscan</b> button onto it.</li>
-  <li>Open any site and click the bookmark.</li>
-</ol>
+@keyframes flow{to{background-position:0 -12px}}
+@keyframes rise{
+  0%,12%{opacity:0;transform:none}
+  18%{opacity:.85;transform:translateY(-6px) rotate(-2deg)}
+  62%{opacity:.85;transform:translateY(-162px) scale(.62)}
+  70%,100%{opacity:0;transform:translateY(-162px) scale(.62)}}
+@keyframes land{0%,62%{opacity:0}68%,88%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.arrow,.ghost,.chip{animation:none}}
+</style></head><body>
 
-<h2>Reading it</h2>
-<div class="k"><span>Red outline</span><b>P0 — screams AI on sight</b></div>
-<div class="k"><span>Amber outline</span><b>P1 — the obvious smell</b></div>
-<div class="k"><span>Blue outline</span><b>P2 — cosmetic</b></div>
-<div class="k"><span>Click a HUD row</span><b>isolate that rule</b></div>
-<div class="k"><span>Click a label</span><b>log the element, scroll to it</b></div>
-<div class="k"><span>Escape</span><b>remove the overlay</b></div>
+<div class="bar" aria-hidden="true"><i></i><i></i><span class="slot"><span class="chip">slopscan</span></span><i></i><i></i></div>
 
-<h2>If the bookmarklet does nothing</h2>
-<p>Some sites block <code>javascript:</code> bookmarks via Content Security Policy. Paste
-<code>dist/slopscan.js</code> into the devtools console instead. In Chrome you may need to
-type <code>allow pasting</code> once first.</p>
+<div class="arrow" aria-hidden="true"></div>
+<div class="btn"><span class="ghost" aria-hidden="true">slopscan</span><a class="bm" href="__BOOKMARKLET__">slopscan</a></div>
+<p class="hint">Drag the button up to your bookmarks bar</p>
+<p class="keys">Bar hidden? <kbd>Cmd</kbd> <kbd>Shift</kbd> <kbd>B</kbd> or <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>B</kbd></p>
 
-<footer>
-The score is a weighted sum of first-guess weights, not a fitted model. Read the rule list, not
-the number. Distribution signals (radius, spacing, type scale) discriminate well; single-face and
-single-feature checks are advisory. Bookmarklet is __SIZE__ KB.
-</footer>
-</main></body></html>
+<main>
+  <h1>slopscan</h1>
+  <p>Marks AI-slop UI on any page. __RULES__ rules, nothing leaves your browser.</p>
+  <a href="demo.html">Try it on the demo page &#8594;</a>
+</main>
+</body></html>
