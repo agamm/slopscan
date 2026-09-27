@@ -1,0 +1,50 @@
+src/ui/overlay.js
+  s_b00660ad49d64d::t_9b6794688b55c2 3,38,69,71,95
+src/scan.js
+  s_b00660ad49d64d::t_9b6794688b55c2 38,40,44-45
+README.md
+  s_b00660ad49d64d::t_f4e710f910e91f 28,61-63,86,88,94
+  s_b00660ad49d64d::t_e74937cf73d540 1,3-6,8-12,14-18,20-22,24,26-27,30-32,34,36,38-42,44-45,47-48,50,52-59,65,67,69-75,79-82,96,100-103,105
+dist/slopscan.js
+  s_b00660ad49d64d::t_9b6794688b55c2 1,10,996-999,1006-1010,1012-1019,1033-1050,1079,1083-1116,1118-1140,1175,1206,1208,1232,1337,1339,1343-1344
+  s_b00660ad49d64d::t_7061751a57c687 994-995,1005,1020-1026,1052-1053,1055-1056
+  s_b00660ad49d64d::t_e9f043c31c146f 1117
+index.html
+  s_b00660ad49d64d::t_8f279c64f0893a 4,6-7,9-28,30-52,54-65
+  s_b00660ad49d64d::t_c692d567131ece 53
+src/ui/style.js
+  s_b00660ad49d64d::t_9b6794688b55c2 5-8,15-19,21-28,42-59,88
+  s_b00660ad49d64d::t_7061751a57c687 3-4,14,29-35,61-62,64-65
+src/ui/popover.js
+  s_b00660ad49d64d::t_e9f043c31c146f 36
+  s_b00660ad49d64d::t_fcb870724535f8 1-35,37-58
+dist/install.html
+  s_b00660ad49d64d::t_c692d567131ece 53
+  s_b00660ad49d64d::t_8f279c64f0893a 4,6-7,9-28,30-52,54-65
+src/install.template.html
+  s_b00660ad49d64d::t_8f279c64f0893a 24
+  s_b00660ad49d64d::t_55c3b174920da7 4,6-7,9-23,25-28,30-52,54-65
+  s_b00660ad49d64d::t_c692d567131ece 53
+dist/bookmarklet.txt
+  s_b00660ad49d64d::t_e9f043c31c146f 1
+src/lib/severity.js
+  s_b00660ad49d64d::t_9b6794688b55c2 5
+dist/slopscan.min.js
+  s_b00660ad49d64d::t_9e27d69a28156a 5,877-882,888-893,895-909,916-933,935-936,938-939,962,965-1010,1040,1062,1064,1085,1175,1177,1181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5618584b3cd6ffea79c03263c2244cbee10a26ee",
+  "prompts": {},
+  "sessions": {
+    "s_b00660ad49d64d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6606d207-da3b-4720-9c01-796476bc1485",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agam More <Agam@agam.me>"
+    }
+  }
+}
