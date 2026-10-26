@@ -71,6 +71,7 @@ Thresholds borrow from [slop-detect](https://github.com/ravidsrk/slop-detect),
 | Click a HUD row | Only that rule's boxes |
 | Hover a label | Why the rule fired |
 | Click a label | The element logged to the console |
+| Click **copy for AI** | Every finding plus the page URL and state on your clipboard, ready to paste into Claude Code |
 | <kbd>Esc</kbd> | Overlay removed |
 | `window.__slopscan__` | The full report |
 

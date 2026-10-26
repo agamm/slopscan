@@ -35,7 +35,7 @@ function strip(src) {
   return src.split('\n')
     .filter(l => !IMPORT_RE.test(l))
     .join('\n')
-    .replace(/^export\s+(const|let|function|class)\s/gm, '$1 ')
+    .replace(/^export\s+(const|let|async function|function|class)\s/gm, '$1 ')
     .replace(/^export\s*\{[^}]*\};?\s*$/gm, '');
 }
 

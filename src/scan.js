@@ -31,6 +31,7 @@ export function runScan() {
 
   const report = {
     score, tier, fired, byId, page, nodes,
+    scroll: { x: window.scrollX, y: window.scrollY },
     ruleCount: RULES.length, shownCount: shown.length, nodeCount: nodes.length,
     ms: Math.round(performance.now() - started),
   };

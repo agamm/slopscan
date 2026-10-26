@@ -1,4 +1,5 @@
 import { SEV_COLOR } from '../lib/severity.js';
+import { reportText, copyText } from './report.js';
 
 const tierColour = score => score >= 45 ? '#ff2d55' : score >= 22 ? '#ffb020' : '#4ade80';
 
@@ -35,7 +36,7 @@ ${f.top.map(fontRow).join('') || '<div class="m">none</div>'}
 <div class="m"><span>hue buckets</span><b>${page.hueCount}</b></div>
 <div class="m"><span>icons L/H/other</span><b>${page.iconSets.lucide}/${page.iconSets.heroicons}/${page.iconSets.other}</b></div>
 <div class="sep"></div>
-<div style="display:flex;gap:7px"><button data-a="all">show all</button><button data-a="close">close (esc)</button></div>`;
+<div style="display:flex;flex-wrap:wrap;gap:7px"><button data-a="copy" title="Copy every finding with the page URL and state, ready to paste into a coding agent">copy for AI</button><button data-a="all">show all</button><button data-a="close">close (esc)</button></div>`;
   document.body.appendChild(hud);
 
   const scoreEl = hud.querySelector('.sc');
@@ -65,6 +66,14 @@ ${f.top.map(fontRow).join('') || '<div class="m">none</div>'}
   hud.querySelector('[data-a=all]').onclick = () => {
     rows.forEach(r => r.classList.remove('on', 'off'));
     setFilter(null);
+  };
+  const copyBtn = hud.querySelector('[data-a=copy]');
+  copyBtn.onclick = async () => {
+    const text = reportText(report);
+    const ok = await copyText(text);
+    if (!ok) console.log(text);
+    copyBtn.textContent = ok ? 'copied' : 'blocked: see console';
+    setTimeout(() => { copyBtn.textContent = 'copy for AI'; }, 1600);
   };
   hud.querySelector('[data-a=close]').onclick = onClose;
   return hud;
