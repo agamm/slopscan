@@ -1,0 +1,42 @@
+README.md
+  s_6be7a73a14bbfc::t_394722dbaad6db 74
+build.mjs
+  s_6be7a73a14bbfc::t_5bc20b1765b1f5 38
+src/ui/hud.js
+  s_6be7a73a14bbfc::t_b57ab7339d2f87 2
+  s_6be7a73a14bbfc::t_d8b6129b88fe9a 39
+  s_6be7a73a14bbfc::t_2f0577ae64c943 70-77
+src/ui/report.js
+  s_6be7a73a14bbfc::t_b963115dbcdc77 1-25,28-41,43-69,71-88
+  s_6be7a73a14bbfc::t_7789c3411d4fe8 26
+  s_6be7a73a14bbfc::t_6bd24eb1206878 27,42,70
+dist/bookmarklet.txt
+  s_6be7a73a14bbfc::t_5bc20b1765b1f5 1
+src/scan.js
+  s_6be7a73a14bbfc::t_6bd24eb1206878 34
+dist/install.html
+  s_6be7a73a14bbfc::t_5bc20b1765b1f5 56
+dist/slopscan.js
+  s_6be7a73a14bbfc::t_5bc20b1765b1f5 1310
+  s_6be7a73a14bbfc::t_394722dbaad6db 1,1235-1309,1311-1322,1359,1390-1397,1429
+index.html
+  s_6be7a73a14bbfc::t_5bc20b1765b1f5 56
+dist/slopscan.min.js
+  s_6be7a73a14bbfc::t_03e9d9f92e2e52 1087-1163,1196,1225-1232,1257
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2e3584a9ed838ea089450e7a1fe7cdc8536b3cb5",
+  "prompts": {},
+  "sessions": {
+    "s_6be7a73a14bbfc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "195f5d7b-6386-4d32-9410-6f2e0aa9b949",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Agam More <Agam@agam.me>"
+    }
+  }
+}
